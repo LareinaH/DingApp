@@ -1,4 +1,4 @@
-package com.admin.ac.dingApp;
+package com.admin.ac.ding;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
