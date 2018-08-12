@@ -31,13 +31,13 @@ public class BaseModel implements Serializable {
 	 * 删除状态
 	 */
 	@Column(name = "is_deleted")
-	private Boolean isDeleted;
+	private Boolean isDeleted = false;
 
 	@Column(name = "gmt_create")
-	private Date gmtCreate;
+	private Date gmtCreate = new Date();
 
 	@Column(name = "gmt_modify")
-	private Date gmtModify;
+	private Date gmtModify = new Date();
 
 
 	public Long getId() {

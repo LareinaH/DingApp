@@ -1,24 +1,39 @@
 package com.admin.ac.ding.controller;
 
+import com.admin.ac.ding.constants.Constants;
 import com.admin.ac.ding.mapper.MeetingInChargeMapper;
 import com.admin.ac.ding.mapper.MeetingMediaInChargeMapper;
 import com.admin.ac.ding.mapper.MeetingPicsMapper;
 import com.admin.ac.ding.mapper.MeetingRoomDetailMapper;
 import com.admin.ac.ding.model.*;
+import com.admin.ac.ding.service.DingService;
+import com.dingtalk.api.DefaultDingTalkClient;
+import com.dingtalk.api.DingTalkClient;
+import com.dingtalk.api.request.OapiDepartmentListIdsRequest;
+import com.dingtalk.api.request.OapiDepartmentListRequest;
+import com.dingtalk.api.request.OapiGettokenRequest;
+import com.dingtalk.api.request.OapiUserGetRequest;
+import com.dingtalk.api.response.OapiDepartmentListIdsResponse;
+import com.dingtalk.api.response.OapiDepartmentListResponse;
+import com.dingtalk.api.response.OapiGettokenResponse;
+import com.dingtalk.api.response.OapiUserGetResponse;
+import com.taobao.api.ApiException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/admin", produces = "application/json; charset=UTF-8")
-public class AdminController {
+public class AdminController extends BaseController {
     private Logger logger = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
@@ -32,6 +47,9 @@ public class AdminController {
 
     @Autowired
     MeetingPicsMapper meetingPicsMapper;
+
+    @Autowired
+    DingService dingService;
 
     @RequestMapping(value = "/getMeetingRoomList", method = {RequestMethod.GET})
     public RestResponse<List<Map<String, Object>>> getMeetingRoomList() {
@@ -94,5 +112,21 @@ public class AdminController {
         );
 
         return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/getDeptInfo", method = {RequestMethod.GET})
+    public RestResponse<List<OapiDepartmentListResponse.Department>> getDeptInfo(
+            @RequestParam(value = "deptId", required = false, defaultValue = "1") String deptId
+    ) throws ApiException, ExecutionException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/department/list");
+        OapiDepartmentListRequest departmentListRequest = new OapiDepartmentListRequest();
+        departmentListRequest.setId(deptId);
+        departmentListRequest.setHttpMethod("GET");
+        OapiDepartmentListResponse departmentListResponse = client.execute(departmentListRequest, dingService.getAccessToken());
+        if (!departmentListResponse.isSuccess()) {
+            return RestResponse.getFailedResponse(Constants.RcError, departmentListResponse.getErrmsg());
+        }
+
+        return RestResponse.getSuccesseResponse(departmentListResponse.getDepartment());
     }
 }
