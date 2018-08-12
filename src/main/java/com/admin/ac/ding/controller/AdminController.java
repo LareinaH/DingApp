@@ -116,11 +116,13 @@ public class AdminController extends BaseController {
 
     @RequestMapping(value = "/getDeptInfo", method = {RequestMethod.GET})
     public RestResponse<List<OapiDepartmentListResponse.Department>> getDeptInfo(
-            @RequestParam(value = "deptId", required = false, defaultValue = "1") String deptId
+            @RequestParam(value = "deptId", required = false, defaultValue = "1") String deptId,
+            @RequestParam(value = "fetchChild", required = false, defaultValue = "true") Boolean fetchChild
     ) throws ApiException, ExecutionException {
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/department/list");
         OapiDepartmentListRequest departmentListRequest = new OapiDepartmentListRequest();
         departmentListRequest.setId(deptId);
+        departmentListRequest.setFetchChild(fetchChild);
         departmentListRequest.setHttpMethod("GET");
         OapiDepartmentListResponse departmentListResponse = client.execute(departmentListRequest, dingService.getAccessToken());
         if (!departmentListResponse.isSuccess()) {
