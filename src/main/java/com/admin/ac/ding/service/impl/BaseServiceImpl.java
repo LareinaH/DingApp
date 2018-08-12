@@ -1,6 +1,6 @@
 package com.admin.ac.ding.service.impl;
 
-import com.admin.ac.ding.mapper.BaseMapper;
+import com.admin.ac.ding.base.BaseMapper;
 import com.admin.ac.ding.model.BaseModel;
 import com.admin.ac.ding.service.BaseService;
 import com.github.pagehelper.PageHelper;

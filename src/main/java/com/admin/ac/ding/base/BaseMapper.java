@@ -1,4 +1,4 @@
-package com.admin.ac.ding.mapper;
+package com.admin.ac.ding.base;
 
 import com.admin.ac.ding.model.BaseModel;
 import tk.mybatis.mapper.common.Mapper;

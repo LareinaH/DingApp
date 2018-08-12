@@ -9,7 +9,7 @@
         <property name="useMapperCommentGenerator" value="false"/>
 
         <plugin type="tk.mybatis.mapper.generator.MapperPlugin">
-            <property name="mappers" value="com.admin.ac.ding.mapper.BaseMapper"/>
+            <property name="mappers" value="com.admin.ac.ding.base.BaseMapper"/>
             <property name="caseSensitive" value="true"/>
             <property name="forceAnnotation" value="true"/>
             <property name="beginningDelimiter" value="`"/>
