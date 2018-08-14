@@ -130,4 +130,14 @@ public class DingService {
         checkResponse(response, "查询部门用户列表详情失败");
         return response.getUserlist();
     }
+
+    public OapiUserGetuserinfoResponse getUserByCode(String code) throws DingServiceException, ExecutionException, ApiException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/user/getuserinfo");
+        OapiUserGetuserinfoRequest request = new OapiUserGetuserinfoRequest();
+        request.setCode(code);
+        request.setHttpMethod("GET");
+        OapiUserGetuserinfoResponse response = client.execute(request, getAccessToken());
+        checkResponse(response, "获取登录用户失败");
+        return response;
+    }
 }

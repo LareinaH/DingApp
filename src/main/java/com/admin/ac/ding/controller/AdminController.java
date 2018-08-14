@@ -207,6 +207,13 @@ public class AdminController extends BaseController {
         return RestResponse.getSuccesseResponse(dingService.getDeptUserListDetail(deptId));
     }
 
+    @RequestMapping(value = "/getUserByCode", method = {RequestMethod.GET})
+    public RestResponse<OapiUserGetuserinfoResponse> getUserByCode(
+            String code
+    ) throws ApiException, ExecutionException, DingServiceException {
+        return RestResponse.getSuccesseResponse(dingService.getUserByCode(code));
+    }
+
     @RequestMapping(value = "/addPrivilegedDept", method = {RequestMethod.POST})
     public RestResponse<Void> addPrivilegedDept(
             Long deptId
