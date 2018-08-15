@@ -1,5 +1,6 @@
 package com.admin.ac.ding.controller;
 
+import com.admin.ac.ding.constants.Constants;
 import com.admin.ac.ding.enums.MeetingBookStatus;
 import com.admin.ac.ding.enums.SystemRoleType;
 import com.admin.ac.ding.exception.DingServiceException;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
@@ -107,7 +109,7 @@ public class DingController extends BaseController {
                 .collect(Collectors.toMap(MeetingRoomDetail::getId, Function.identity()));
 
         return RestResponse.getSuccesseResponse(
-                new PageInfo<MeetingBookVO>(
+                new PageInfo<>(
                         meetingBookList.stream().map(x -> {
                             MeetingBookVO meetingBookVO = new MeetingBookVO();
                             BeanUtils.copyProperties(x, meetingBookVO);
@@ -118,5 +120,39 @@ public class DingController extends BaseController {
                         }).collect(Collectors.toList())
                 )
         );
+    }
+
+    @RequestMapping(value = "/queryMeetingBookById", method = {RequestMethod.GET})
+    public RestResponse<MeetingBookVO> queryMeetingBookPageList(
+            Long id
+    ) throws ExecutionException, ApiException, DingServiceException {
+        Example example4 = new Example(MeetingBook.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        criteria4.andEqualTo("id", id);
+
+        List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
+        if (CollectionUtils.isEmpty(meetingBookList)) {
+            return RestResponse.getFailedResponse(Constants.RcError, "该会议预约记录不存在");
+        }
+
+        MeetingBook meetingBook = meetingBookList.get(0);
+        MeetingBookVO meetingBookVO = new MeetingBookVO();
+        BeanUtils.copyProperties(meetingBook, meetingBookVO);
+
+        // 查找会议室详情
+        Example example = new Example(MeetingRoomDetail.class);
+        List<MeetingRoomDetail> meetingRoomDetailList = meetingRoomDetailMapper.selectByExample(example);
+        Map<Long, MeetingRoomDetail> meetingRoomDetailMap = meetingRoomDetailList.stream()
+                .collect(Collectors.toMap(MeetingRoomDetail::getId, Function.identity()));
+        if (meetingRoomDetailMap.containsKey(meetingBook.getMeetingRoomId())) {
+            meetingBookVO.setMeetingRoomDetail(meetingRoomDetailMap.get(meetingBook.getMeetingRoomId()));
+        }
+
+        // 查询申请人信息
+        OapiUserGetResponse oapiUserGetResponse = dingService.getUserDetail(meetingBook.getBookUserId());
+        meetingBookVO.setBookUserDetail(oapiUserGetResponse);
+
+        return RestResponse.getSuccesseResponse(meetingBookVO);
     }
 }
