@@ -140,4 +140,13 @@ public class DingService {
         checkResponse(response, "获取登录用户失败");
         return response;
     }
+
+    public OapiGetJsapiTicketResponse getJsApiTicket() throws DingServiceException, ExecutionException, ApiException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/get_jsapi_ticket");
+        OapiGetJsapiTicketRequest request = new OapiGetJsapiTicketRequest();
+        request.setHttpMethod("GET");
+        OapiGetJsapiTicketResponse response = client.execute(request, getAccessToken());
+        checkResponse(response, "获取jsapi_ticket失败");
+        return response;
+    }
 }

@@ -5,6 +5,8 @@ import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.DingService;
+import com.admin.ac.ding.utils.DingTalkEncryptException;
+import com.admin.ac.ding.utils.DingTalkJsApiSingnature;
 import com.dingtalk.api.response.*;
 import com.taobao.api.ApiException;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +20,8 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -113,16 +117,26 @@ public class AdminController extends BaseController {
         );
     }
 
+    @RequestMapping(value = "/delMeetingRoom", method = {RequestMethod.POST})
+    @Transactional
+    public RestResponse<Void> delMeetingRoom(
+           Long id
+    ) {
+        meetingRoomDetailMapper.delMeetingRoom(id);
+        return RestResponse.getSuccesseResponse();
+    }
+
+
     @RequestMapping(value = "/addMeetingRoom", method = {RequestMethod.POST})
     @Transactional
     public RestResponse<Void> addMeetingRoom(
-            @RequestParam(value = "name") String name,
-            @RequestParam(value = "place") String place,
-            @RequestParam(value = "size") Integer size,
-            @RequestParam(value = "type") String type,
-            @RequestParam(value = "memo") String memo,
-            @RequestBody Map<String, Object> extraInfo
+              @RequestBody Map<String, Object> extraInfo
     ) {
+        String name = (String)extraInfo.get("name");
+        String place = (String)extraInfo.get("place");
+        Integer size = (Integer)extraInfo.get("size");
+        String type = (String)extraInfo.get("type");
+        String memo = (String)extraInfo.get("memo");
         MeetingRoomDetail meetingRoomDetail = new MeetingRoomDetail();
         meetingRoomDetail.setName(name);
         meetingRoomDetail.setPlace(place);
@@ -301,5 +315,21 @@ public class AdminController extends BaseController {
                     return null;
                 }).filter(z -> z != null).collect(Collectors.toList())
         );
+    }
+
+    @RequestMapping(value = "/getSignParam", method = {RequestMethod.GET})
+    public RestResponse<Map<String, Object>> getSignParam(
+            String url
+    ) throws DingTalkEncryptException, ExecutionException, ApiException, DingServiceException {
+        String jsApiTicket = dingService.getJsApiTicket().getTicket();
+        String nonceStr = UUID.randomUUID().toString();
+        Long timeStamp = System.currentTimeMillis();
+        String sign = DingTalkJsApiSingnature.getJsApiSingnature(url, nonceStr, timeStamp, jsApiTicket);
+        Map<String, Object> signMap = new TreeMap<>();
+        signMap.put("url", url);
+        signMap.put("nonceStr", nonceStr);
+        signMap.put("timeStamp", timeStamp);
+        signMap.put("signature", sign);
+        return RestResponse.getSuccesseResponse(signMap);
     }
 }

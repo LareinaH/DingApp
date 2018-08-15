@@ -1,5 +1,7 @@
 package com.admin.ac.ding.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 import javax.persistence.*;
 
@@ -12,6 +14,7 @@ public class MeetingBook extends BaseModel {
      *
      * @mbg.generated Sun Aug 12 21:21:39 CST 2018
      */
+    @JsonFormat(locale="zh_CN", timezone="GMT+8", pattern="yyyy-MM-dd")
     private Date bookDay;
 
     /**
@@ -48,6 +51,7 @@ public class MeetingBook extends BaseModel {
      *
      * @mbg.generated Sun Aug 12 21:21:39 CST 2018
      */
+    @JsonFormat(locale="zh_CN", timezone="GMT+8", pattern="HH:mm:ss")
     private Date meetingStart;
 
     /**
