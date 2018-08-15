@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
@@ -170,17 +171,19 @@ public class AdminController extends BaseController {
                     return meetingMediaInCharge;
                 }).collect(Collectors.toList())
         );
-
-        meetingPicsMapper.insertList(
-                picsList.stream()
-                        .filter(x -> StringUtils.isNotBlank(x))
-                        .map(x -> {
+        List<MeetingPics> meetingPicsList = picsList.stream()
+                .filter(x -> StringUtils.isNotBlank(x))
+                .map(x -> {
                     MeetingPics meetingPics = new MeetingPics();
                     meetingPics.setMeetingRoomId(meetingRoomDetail.getId());
                     meetingPics.setPicsUrl(x);
                     return meetingPics;
-                }).collect(Collectors.toList())
-        );
+                }).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(meetingPicsList)) {
+            meetingPicsMapper.insertList(
+                    meetingPicsList
+            );
+        }
 
         return RestResponse.getSuccesseResponse();
     }
