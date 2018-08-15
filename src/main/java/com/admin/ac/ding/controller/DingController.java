@@ -155,4 +155,37 @@ public class DingController extends BaseController {
 
         return RestResponse.getSuccesseResponse(meetingBookVO);
     }
+
+    @RequestMapping(value = "/processMeetingBook", method = {RequestMethod.POST})
+    public RestResponse<Void> processMeetingBook(
+            String userId,
+            Long meetingBookId,
+            String oper,
+            String comment
+    ) {
+        Example example4 = new Example(MeetingBook.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        criteria4.andEqualTo("id", meetingBookId);
+
+        List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
+        if (CollectionUtils.isEmpty(meetingBookList)) {
+            return RestResponse.getFailedResponse(Constants.RcError, "该会议预约记录不存在");
+        }
+
+        MeetingBook meetingBook = meetingBookList.get(0);
+        MeetingBookStatus meetingBookStatus = MeetingBookStatus.valueOf(oper);
+        meetingBook.setBookStatus(meetingBookStatus.name());
+        if (MeetingBookStatus.DENY.equals(meetingBookStatus)) {
+            meetingBook.setDenyComment(comment);
+        } else if (MeetingBookStatus.ADMIN_CANCEL.equals(meetingBookStatus)) {
+            meetingBook.setCancelComment(comment);
+        }
+
+        meetingBookMapper.updateByPrimaryKey(meetingBook);
+
+        logger.info("user {} process meeting book apply {} with oper {}", userId, meetingBookId, oper);
+
+        return RestResponse.getSuccesseResponse();
+    }
 }
