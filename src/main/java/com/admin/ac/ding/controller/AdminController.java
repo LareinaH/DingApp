@@ -5,8 +5,10 @@ import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.DingService;
+import com.admin.ac.ding.service.UserCacheService;
 import com.admin.ac.ding.utils.DingTalkEncryptException;
 import com.admin.ac.ding.utils.DingTalkJsApiSingnature;
+import com.alibaba.fastjson.JSONObject;
 import com.dingtalk.api.response.*;
 import com.taobao.api.ApiException;
 import org.apache.commons.lang3.StringUtils;
@@ -19,10 +21,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -52,6 +51,9 @@ public class AdminController extends BaseController {
     @Autowired
     DingService dingService;
 
+    @Autowired
+    UserCacheService userCacheService;
+
     @RequestMapping(value = "/getMeetingRoomList", method = {RequestMethod.GET})
     public RestResponse<List<MeetingRoomDetailVO>> getMeetingRoomList() {
         Example example = new Example(MeetingRoomDetail.class);
@@ -70,7 +72,7 @@ public class AdminController extends BaseController {
                 meetingRoomDetailVO.getInCharge().addAll(
                         meetingInChargeList.stream().map(y -> {
                             try {
-                                return dingService.getUserDetail(y.getUserId());
+                                return userCacheService.getUserDetail(y.getUserId());
                             } catch (DingServiceException e) {
                                 e.printStackTrace();
                             } catch (ExecutionException e) {
@@ -91,7 +93,7 @@ public class AdminController extends BaseController {
                 meetingRoomDetailVO.getMediaInCharge().addAll(
                         meetingMediaInChargeList.stream().map(y -> {
                             try {
-                                return dingService.getUserDetail(y.getUserId());
+                                return userCacheService.getUserDetail(y.getUserId());
                             } catch (DingServiceException e) {
                                 e.printStackTrace();
                             } catch (ExecutionException e) {
@@ -207,7 +209,7 @@ public class AdminController extends BaseController {
     public RestResponse<OapiUserGetResponse> getUserDetail(
             String userId
     ) throws ApiException, ExecutionException, DingServiceException {
-        return RestResponse.getSuccesseResponse(dingService.getUserDetail(userId));
+        return RestResponse.getSuccesseResponse(userCacheService.getUserDetail(userId));
     }
 
     @RequestMapping(value = "/getDeptUserList", method = {RequestMethod.GET})
@@ -334,5 +336,40 @@ public class AdminController extends BaseController {
         signMap.put("timeStamp", timeStamp);
         signMap.put("signature", sign);
         return RestResponse.getSuccesseResponse(signMap);
+    }
+
+    @RequestMapping(value = "/getUserRole", method = {RequestMethod.GET})
+    public RestResponse<JSONObject> getUserRole(
+            String userId
+    ) {
+        Set<String> userRoles = new TreeSet<>();
+        Example example2 = new Example(SysRole.class);
+        Example.Criteria criteria2 = example2.createCriteria();
+        criteria2.andEqualTo("isDeleted", false);
+        criteria2.andEqualTo("userId", userId);
+        List<SysRole> sysRoleList = sysRoleMapper.selectByExample(example2);
+        userRoles.addAll(
+                sysRoleList.stream().map(x -> x.getRole()).collect(Collectors.toList())
+        );
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("sysRole", userRoles);
+
+        Example example3 = new Example(MeetingInCharge.class);
+        Example.Criteria criteria3 = example3.createCriteria();
+        criteria3.andEqualTo("isDeleted", false);
+        criteria3.andEqualTo("userId", userId);
+        List<MeetingInCharge> meetingInChargeList =  meetingInChargeMapper.selectByExample(example3);
+
+        jsonObject.put("meeingInCharge", meetingInChargeList.stream().map(x -> x.getMeetingRoomId()).collect(Collectors.toSet()));
+
+        Example example4 = new Example(MeetingMediaInCharge.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        criteria4.andEqualTo("userId", userId);
+        List<MeetingMediaInCharge> meetingMediaInChargeList =  meetingMediaInChargeMapper.selectByExample(example4);
+
+        jsonObject.put("meeingMediaInCharge", meetingMediaInChargeList.stream().map(x -> x.getMeetingRoomId()).collect(Collectors.toSet()));
+        return RestResponse.getSuccesseResponse(jsonObject);
     }
 }
