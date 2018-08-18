@@ -80,6 +80,7 @@ public class DingController extends BaseController {
         // 检查基础参数
 
         // 检查指定会议室是否已经被占用
+
         // 检查指定会议室是否被其它人申请中
         // 插入记录
         // 通知管理员审核
@@ -210,6 +211,26 @@ public class DingController extends BaseController {
 
         MeetingBook meetingBook = meetingBookList.get(0);
         MeetingBookStatus meetingBookStatus = MeetingBookStatus.valueOf(oper);
+        MeetingBookStatus oldStatus = MeetingBookStatus.valueOf(meetingBook.getBookStatus());
+        if (MeetingBookStatus.AGREE.equals(meetingBookStatus)
+                || MeetingBookStatus.DENY.equals(meetingBookStatus)) {
+            if (!MeetingBookStatus.WAIT_APPROVE.equals(oldStatus)) {
+                return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约已经被处理了");
+            }
+        }
+
+        if (MeetingBookStatus.ADMIN_CANCEL.equals(meetingBookStatus)) {
+            if (!MeetingBookStatus.AGREE.equals(oldStatus)) {
+                return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约还没有被通过,不能进行系统取消操作");
+            }
+        }
+
+        if (MeetingBookStatus.USER_CANCEL.equals(meetingBookStatus)) {
+            if (!MeetingBookStatus.WAIT_APPROVE.equals(oldStatus)) {
+                return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约不是待审核状态,不能进行用户取消操作");
+            }
+        }
+
         meetingBook.setBookStatus(meetingBookStatus.name());
         if (MeetingBookStatus.DENY.equals(meetingBookStatus)) {
             meetingBook.setDenyComment(comment);
