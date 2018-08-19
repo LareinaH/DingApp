@@ -309,7 +309,7 @@ public class DingController extends BaseController {
         Example.Criteria criteria4 = example4.createCriteria();
         criteria4.andEqualTo("isDeleted", false);
         criteria4.andGreaterThanOrEqualTo("bookDay", date);
-        criteria4.andEqualTo("bookStatus", MeetingBookStatus.AGREE.name());
+        criteria4.andIn("bookStatus", Arrays.asList(MeetingBookStatus.AGREE.name(), MeetingBookStatus.WAIT_APPROVE.name()));
 
         List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
 
