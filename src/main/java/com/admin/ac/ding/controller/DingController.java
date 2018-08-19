@@ -284,13 +284,14 @@ public class DingController extends BaseController {
                         Arrays.asList(meetingBook.getBookUserId()),
                         "会议室预约结果通知",
                         String.format(
-                                "你预约的%s%s的会议室:%s,申请结果为:%s,请前往查看详情",
+                                "你预约的%s%s的会议室:%s(申请单号为%d),申请结果为:%s,请前往查看详情",
                                 DateFormatUtils.format(
                                         meetingBook.getBookDay(),
                                         "yyyy-MM-dd"
                                 ),
                                 MeetingSlot.valueOf(meetingBook.getBookTime()).getDisplayName(),
                                 meetingRoomDetail.getName(),
+                                meetingBook.getId(),
                                 meetingBookStatus.getDisplayName()
                                 ),
                         meetingBookUrl
@@ -319,13 +320,14 @@ public class DingController extends BaseController {
                     new ArrayList<>(notificationUsers),
                     "会议室预约操作通知",
                     String.format(
-                            "%s%s的会议室:%s,预约结果为:%s,点击可查看详情列表",
+                            "%s%s的会议室:%s(申请单号为%d),预约结果为:%s,点击可查看详情列表",
                             DateFormatUtils.format(
                                     meetingBook.getBookDay(),
                                     "yyyy-MM-dd"
                             ),
                             MeetingSlot.valueOf(meetingBook.getBookTime()).getDisplayName(),
                             meetingRoomDetail.getName(),
+                            meetingBook.getId(),
                             meetingBookStatus.getDisplayName()
                     ),
                     meetingBookUrl
