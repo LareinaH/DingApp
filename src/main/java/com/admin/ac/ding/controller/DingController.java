@@ -247,19 +247,13 @@ public class DingController extends BaseController {
         if (MeetingBookStatus.AGREE.equals(meetingBookStatus)
                 || MeetingBookStatus.DENY.equals(meetingBookStatus)) {
             if (!MeetingBookStatus.WAIT_APPROVE.equals(oldStatus)) {
-                return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约已经被处理了");
+                return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约审批已经被处理了");
             }
         }
 
         if (MeetingBookStatus.ADMIN_CANCEL.equals(meetingBookStatus)) {
             if (!MeetingBookStatus.AGREE.equals(oldStatus)) {
                 return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约还没有被通过,不能进行系统取消操作");
-            }
-        }
-
-        if (MeetingBookStatus.USER_CANCEL.equals(meetingBookStatus)) {
-            if (!MeetingBookStatus.WAIT_APPROVE.equals(oldStatus)) {
-                return RestResponse.getFailedResponse(Constants.RcError, "啊噢,这个会议室预约不是待审核状态,不能进行用户取消操作");
             }
         }
 
