@@ -300,7 +300,7 @@ public class DingController extends BaseController {
             }
 
             Example example1 = new Example(MeetingInCharge.class);
-            Example.Criteria criteria1 = example4.createCriteria();
+            Example.Criteria criteria1 = example1.createCriteria();
             criteria1.andEqualTo("isDeleted", false);
             criteria1.andEqualTo("meetingRoomId", meetingBook.getMeetingRoomId());
             List<MeetingInCharge> meetingInChargeList = meetingInChargeMapper.selectByExample(example1);
