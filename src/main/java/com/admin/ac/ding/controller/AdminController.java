@@ -1,5 +1,6 @@
 package com.admin.ac.ding.controller;
 
+import com.admin.ac.ding.constants.Constants;
 import com.admin.ac.ding.enums.SystemRoleType;
 import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
@@ -172,6 +173,74 @@ public class AdminController extends BaseController {
                     meetingMediaInCharge.setMeetingRoomId(meetingRoomDetail.getId());
                     return meetingMediaInCharge;
                 }).collect(Collectors.toList())
+        );
+        List<MeetingPics> meetingPicsList = picsList.stream()
+                .filter(x -> StringUtils.isNotBlank(x))
+                .map(x -> {
+                    MeetingPics meetingPics = new MeetingPics();
+                    meetingPics.setMeetingRoomId(meetingRoomDetail.getId());
+                    meetingPics.setPicsUrl(x);
+                    return meetingPics;
+                }).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(meetingPicsList)) {
+            meetingPicsMapper.insertList(
+                    meetingPicsList
+            );
+        }
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/updateMeetingRoom", method = {RequestMethod.POST})
+    @Transactional
+    public RestResponse<Void> updateMeetingRoom(
+            @RequestBody Map<String, Object> extraInfo
+    ) {
+        Long id = Long.valueOf((Integer)extraInfo.get("id"));
+        String name = (String)extraInfo.get("name");
+        String place = (String)extraInfo.get("place");
+        Integer size = (Integer)extraInfo.get("size");
+        String type = (String)extraInfo.get("type");
+        String memo = (String)extraInfo.get("memo");
+        MeetingRoomDetail meetingRoomDetail = new MeetingRoomDetail();
+        meetingRoomDetail.setId(id);
+        meetingRoomDetail.setName(name);
+        meetingRoomDetail.setPlace(place);
+        meetingRoomDetail.setSize(size);
+        meetingRoomDetail.setType(type);
+        meetingRoomDetail.setMemo(memo);
+
+        meetingRoomDetailMapper.updateByPrimaryKey(meetingRoomDetail);
+
+        // 删除其它字段，再重新插入
+        meetingInChargeMapper.delMeetingInCharge(id);
+        meetingMediaInChargeMapper.delMeetingMediaInCharge(id);
+        meetingPicsMapper.delMeetingPics(id);
+
+        List<String> inChargeList = (List<String>)extraInfo.get("inCharge");
+        List<String> mediaInChargeList = (List<String>)extraInfo.get("mediaInCharge");
+        List<String> picsList = (List<String>)extraInfo.get("pics");
+
+
+        meetingInChargeMapper.insertList(
+                inChargeList.stream()
+                        .filter(x -> StringUtils.isNotBlank(x))
+                        .map(x -> {
+                            MeetingInCharge meetingInCharge = new MeetingInCharge();
+                            meetingInCharge.setUserId(x);
+                            meetingInCharge.setMeetingRoomId(meetingRoomDetail.getId());
+                            return meetingInCharge;
+                        }).collect(Collectors.toList())
+        );
+        meetingMediaInChargeMapper.insertList(
+                mediaInChargeList.stream()
+                        .filter(x -> StringUtils.isNotBlank(x))
+                        .map(x -> {
+                            MeetingMediaInCharge meetingMediaInCharge = new MeetingMediaInCharge();
+                            meetingMediaInCharge.setUserId(x);
+                            meetingMediaInCharge.setMeetingRoomId(meetingRoomDetail.getId());
+                            return meetingMediaInCharge;
+                        }).collect(Collectors.toList())
         );
         List<MeetingPics> meetingPicsList = picsList.stream()
                 .filter(x -> StringUtils.isNotBlank(x))
@@ -371,5 +440,22 @@ public class AdminController extends BaseController {
 
         jsonObject.put("meeingMediaInCharge", meetingMediaInChargeList.stream().map(x -> x.getMeetingRoomId()).collect(Collectors.toSet()));
         return RestResponse.getSuccesseResponse(jsonObject);
+    }
+
+    @RequestMapping(value = "/sendNotificationToUsers", method = {RequestMethod.POST})
+    public RestResponse<Void> sendNotificationToUsers(
+            String userIds
+    ) throws ExecutionException, ApiException, DingServiceException {
+        if (StringUtils.isBlank(userIds)) {
+            return RestResponse.getFailedResponse(Constants.RcError, "待发送钉钉通知的用户列表为空");
+        }
+
+        dingService.sendNotificationToUser(
+                Arrays.asList(userIds.split(",")),
+                "会议室预约审批通知",
+                "有一个新的会议室预约申请，请前往处理",
+                "http://10.0.0.7:8020/DingApp/redirect.html?action="
+        );
+        return RestResponse.getSuccesseResponse();
     }
 }

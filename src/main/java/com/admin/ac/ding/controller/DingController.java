@@ -2,6 +2,7 @@ package com.admin.ac.ding.controller;
 
 import com.admin.ac.ding.constants.Constants;
 import com.admin.ac.ding.enums.MeetingBookStatus;
+import com.admin.ac.ding.enums.MeetingSlot;
 import com.admin.ac.ding.enums.SystemRoleType;
 import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
@@ -10,7 +11,6 @@ import com.admin.ac.ding.service.DingService;
 import com.admin.ac.ding.service.CacheService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.dingtalk.api.response.OapiUserGetResponse;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.taobao.api.ApiException;
@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
@@ -64,6 +65,9 @@ public class DingController extends BaseController {
     @Autowired
     CacheService cacheService;
 
+    @Value("${ding.app.meetingbook.url}")
+    String meetingBookUrl;
+
     @RequestMapping(value = "/meetingBookApply", method = {RequestMethod.POST})
     public RestResponse<Void> meetingBookApply(
             @RequestBody MeetingBook meetingBook
@@ -74,10 +78,36 @@ public class DingController extends BaseController {
 
         // 检查指定会议室是否被其它人申请中
         // 插入记录
-        // 通知管理员审核
-
         meetingBook.setBookStatus(MeetingBookStatus.WAIT_APPROVE.name());
         meetingBookMapper.insert(meetingBook);
+
+        // 通知管理员审核
+        Example example4 = new Example(MeetingInCharge.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        criteria4.andEqualTo("meetingRoomId", meetingBook.getMeetingRoomId());
+        List<MeetingInCharge> meetingInChargeList = meetingInChargeMapper.selectByExample(example4);
+
+        Example example3 = new Example(MeetingMediaInCharge.class);
+        Example.Criteria criteria3 = example3.createCriteria();
+        criteria3.andEqualTo("isDeleted", false);
+        criteria3.andEqualTo("meetingRoomId", meetingBook.getMeetingRoomId());
+        List<MeetingMediaInCharge> meetingMediaInChargeList = meetingMediaInChargeMapper.selectByExample(example3);
+
+        Set<String> notificationUsers = new TreeSet<>();
+        notificationUsers.addAll(meetingInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
+        notificationUsers.addAll(meetingMediaInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
+
+        try {
+            dingService.sendNotificationToUser(
+                    new ArrayList<>(notificationUsers),
+                    "会议室预约审批通知",
+                    "你有一个新的会议室预约申请，请前往处理",
+                    meetingBookUrl
+            );
+        } catch (Exception e) {
+            logger.error("send notification failed", e);
+        }
 
         return RestResponse.getSuccesseResponse();
     }
@@ -232,6 +262,33 @@ public class DingController extends BaseController {
         meetingBookMapper.updateByPrimaryKey(meetingBook);
 
         logger.info("user {} process meeting book apply {} with oper {}", userId, meetingBookId, oper);
+
+        try {
+
+            MeetingRoomDetail meetingRoomDetail = meetingRoomDetailMapper.selectByPrimaryKey(meetingBook.getMeetingRoomId());
+            if (meetingRoomDetail != null) {
+                dingService.sendNotificationToUser(
+                        Arrays.asList(meetingBook.getBookUserId()),
+                        "会议室预约审批通知",
+                        String.format(
+                                "你预约的%s%s的会议室:%s,申请结果为:%s,请前往查看详情",
+                                DateFormatUtils.format(
+                                        meetingBook.getBookDay(),
+                                        "yyyy-MM-dd"
+                                ),
+                                MeetingSlot.valueOf(meetingBook.getBookTime()).getDisplayName(),
+                                meetingRoomDetail.getName(),
+                                meetingBookStatus.getDisplayName()
+                                ),
+                        meetingBookUrl
+                );
+            } else {
+                logger.error("meeting room {} not exist", meetingBook.getMeetingRoomId());
+            }
+
+        } catch (Exception e) {
+            logger.error("send notification failed", e);
+        }
 
         return RestResponse.getSuccesseResponse();
     }

@@ -1,8 +1,6 @@
 package com.admin.ac.ding.service;
 
-import com.admin.ac.ding.constants.Constants;
 import com.admin.ac.ding.exception.DingServiceException;
-import com.admin.ac.ding.model.RestResponse;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.DingTalkResponse;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class DingService {
@@ -32,6 +31,9 @@ public class DingService {
 
     @Value("${ding.corpsecret}")
     String corpSecret;
+
+    @Value("${ding.app.meetingbook.agentid}")
+    Long meetingBookAppAgentId;
 
     LoadingCache<String,String> cahceBuilder = CacheBuilder
             .newBuilder()
@@ -148,5 +150,34 @@ public class DingService {
         OapiGetJsapiTicketResponse response = client.execute(request, getAccessToken());
         checkResponse(response, "获取jsapi_ticket失败");
         return response;
+    }
+
+    public void sendNotificationToUser(
+            List<String> userIdList,
+            String title,
+            String content,
+            String url
+    ) throws ExecutionException, DingServiceException, ApiException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2");
+
+        OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
+        request.setUseridList(userIdList.stream().collect(Collectors.joining(",")));
+        request.setAgentId(meetingBookAppAgentId);
+        request.setToAllUser(false);
+
+        OapiMessageCorpconversationAsyncsendV2Request.Msg msg = new OapiMessageCorpconversationAsyncsendV2Request.Msg();
+        msg.setMsgtype("link");
+        msg.setLink(new OapiMessageCorpconversationAsyncsendV2Request.Link());
+        msg.getLink().setTitle(title);
+        msg.getLink().setText(content);
+        msg.getLink().setMessageUrl(url);
+        msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5EZVelPOACAAbs4AaQB5_6881401_2097262.png");
+//        msg.getLink().setPicUrl("");
+        request.setMsg(msg);
+
+        OapiMessageCorpconversationAsyncsendV2Response response = client.execute(request, getAccessToken());
+        checkResponse(response, "发送钉钉通知失败");
+
+        logger.info("send notification to user {} success with task id {}", userIdList, response.getTaskId());
     }
 }
