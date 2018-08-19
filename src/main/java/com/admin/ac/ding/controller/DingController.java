@@ -316,7 +316,7 @@ public class DingController extends BaseController {
             notificationUsers.addAll(meetingMediaInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
 
             dingService.sendNotificationToUser(
-                    Arrays.asList(meetingBook.getBookUserId()),
+                    new ArrayList<>(notificationUsers),
                     "会议室预约操作通知",
                     String.format(
                             "%s%s的会议室:%s,预约结果为:%s,点击可查看详情列表",
