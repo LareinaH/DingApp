@@ -7,32 +7,23 @@ import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.DingService;
-import com.admin.ac.ding.service.UserCacheService;
-import com.alibaba.druid.support.json.JSONUtils;
-import com.alibaba.fastjson.JSON;
+import com.admin.ac.ding.service.CacheService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.dingtalk.api.response.OapiDepartmentGetResponse;
-import com.dingtalk.api.response.OapiDepartmentListResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
-import com.dingtalk.api.response.OapiUserListResponse;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.taobao.api.ApiException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -71,7 +62,7 @@ public class DingController extends BaseController {
     AdminController adminController;
 
     @Autowired
-    UserCacheService userCacheService;
+    CacheService cacheService;
 
     @RequestMapping(value = "/meetingBookApply", method = {RequestMethod.POST})
     public RestResponse<Void> meetingBookApply(
@@ -186,7 +177,7 @@ public class DingController extends BaseController {
         }
 
         // 查询申请人信息
-        OapiUserGetResponse oapiUserGetResponse = userCacheService.getUserDetail(meetingBook.getBookUserId());
+        OapiUserGetWithDeptResponse oapiUserGetResponse = cacheService.getUserDetail(meetingBook.getBookUserId());
         meetingBookVO.setBookUserDetail(oapiUserGetResponse);
 
         return RestResponse.getSuccesseResponse(meetingBookVO);

@@ -5,7 +5,7 @@ import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.DingService;
-import com.admin.ac.ding.service.UserCacheService;
+import com.admin.ac.ding.service.CacheService;
 import com.admin.ac.ding.utils.DingTalkEncryptException;
 import com.admin.ac.ding.utils.DingTalkJsApiSingnature;
 import com.alibaba.fastjson.JSONObject;
@@ -52,7 +52,7 @@ public class AdminController extends BaseController {
     DingService dingService;
 
     @Autowired
-    UserCacheService userCacheService;
+    CacheService cacheService;
 
     @RequestMapping(value = "/getMeetingRoomList", method = {RequestMethod.GET})
     public RestResponse<List<MeetingRoomDetailVO>> getMeetingRoomList() {
@@ -72,7 +72,7 @@ public class AdminController extends BaseController {
                 meetingRoomDetailVO.getInCharge().addAll(
                         meetingInChargeList.stream().map(y -> {
                             try {
-                                return userCacheService.getUserDetail(y.getUserId());
+                                return cacheService.getUserDetail(y.getUserId());
                             } catch (DingServiceException e) {
                                 e.printStackTrace();
                             } catch (ExecutionException e) {
@@ -93,7 +93,7 @@ public class AdminController extends BaseController {
                 meetingRoomDetailVO.getMediaInCharge().addAll(
                         meetingMediaInChargeList.stream().map(y -> {
                             try {
-                                return userCacheService.getUserDetail(y.getUserId());
+                                return cacheService.getUserDetail(y.getUserId());
                             } catch (DingServiceException e) {
                                 e.printStackTrace();
                             } catch (ExecutionException e) {
@@ -206,14 +206,14 @@ public class AdminController extends BaseController {
     }
 
     @RequestMapping(value = "/getUserDetail", method = {RequestMethod.GET})
-    public RestResponse<OapiUserGetResponse> getUserDetail(
+    public RestResponse<OapiUserGetWithDeptResponse> getUserDetail(
             String userId
     ) throws ApiException, ExecutionException, DingServiceException {
-        return RestResponse.getSuccesseResponse(userCacheService.getUserDetail(userId));
+        return RestResponse.getSuccesseResponse(cacheService.getUserDetail(userId));
     }
 
     @RequestMapping(value = "/getDeptUserList", method = {RequestMethod.GET})
-    public RestResponse<List<Long>> getDeptUserList(
+    public RestResponse<List<String>> getDeptUserList(
             Long deptId
     ) throws ApiException, ExecutionException, DingServiceException {
         return RestResponse.getSuccesseResponse(dingService.getDeptUserList(deptId));

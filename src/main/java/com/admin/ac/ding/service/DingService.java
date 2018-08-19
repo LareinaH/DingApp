@@ -97,7 +97,7 @@ public class DingService {
         return response;
     }
 
-    public List<Long> getDeptUserList(Long deptId) throws DingServiceException, ExecutionException, ApiException {
+    public List<String> getDeptUserList(Long deptId) throws DingServiceException, ExecutionException, ApiException {
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/user/getDeptMember");
         OapiUserGetDeptMemberRequest req = new OapiUserGetDeptMemberRequest();
         req.setDeptId(String.valueOf(deptId));

@@ -4,7 +4,7 @@ import com.admin.ac.ding.mapper.MeetingInChargeMapper;
 import com.admin.ac.ding.mapper.MeetingMediaInChargeMapper;
 import com.admin.ac.ding.model.MeetingInCharge;
 import com.admin.ac.ding.model.MeetingMediaInCharge;
-import com.admin.ac.ding.service.UserCacheService;
+import com.admin.ac.ding.service.CacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.List;
 public class QueryUserCommandLineRunner implements CommandLineRunner {
 
     @Autowired
-    UserCacheService userCacheService;
+    CacheService cacheService;
 
     @Autowired
     MeetingInChargeMapper meetingInChargeMapper;
@@ -32,7 +32,7 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
         List<MeetingMediaInCharge> meetingMediaInChargeList = meetingMediaInChargeMapper.selectByExample(example3);
         for (MeetingMediaInCharge meetingMediaInCharge : meetingMediaInChargeList) {
             try {
-                userCacheService.getUserDetail(meetingMediaInCharge.getUserId());
+                cacheService.getUserDetail(meetingMediaInCharge.getUserId());
             } catch (Exception e) {
 
             }
@@ -44,7 +44,7 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
         List<MeetingInCharge> meetingInChargeList = meetingInChargeMapper.selectByExample(example2);
         for (MeetingInCharge meetingInCharge : meetingInChargeList) {
             try {
-                userCacheService.getUserDetail(meetingInCharge.getUserId());
+                cacheService.getUserDetail(meetingInCharge.getUserId());
             } catch (Exception e) {
 
             }

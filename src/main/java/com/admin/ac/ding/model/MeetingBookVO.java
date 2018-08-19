@@ -1,11 +1,9 @@
 package com.admin.ac.ding.model;
 
-import com.dingtalk.api.response.OapiUserGetResponse;
-
 public class MeetingBookVO extends MeetingBook {
     MeetingRoomDetail meetingRoomDetail;
 
-    OapiUserGetResponse bookUserDetail;
+    OapiUserGetWithDeptResponse bookUserDetail;
 
     public MeetingRoomDetail getMeetingRoomDetail() {
         return meetingRoomDetail;
@@ -15,11 +13,11 @@ public class MeetingBookVO extends MeetingBook {
         this.meetingRoomDetail = meetingRoomDetail;
     }
 
-    public OapiUserGetResponse getBookUserDetail() {
+    public OapiUserGetWithDeptResponse getBookUserDetail() {
         return bookUserDetail;
     }
 
-    public void setBookUserDetail(OapiUserGetResponse bookUserDetail) {
+    public void setBookUserDetail(OapiUserGetWithDeptResponse bookUserDetail) {
         this.bookUserDetail = bookUserDetail;
     }
 }

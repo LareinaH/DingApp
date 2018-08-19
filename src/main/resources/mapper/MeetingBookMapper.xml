@@ -24,5 +24,6 @@
     <result column="book_comment" jdbcType="LONGVARCHAR" property="bookComment" />
     <result column="deny_comment" jdbcType="LONGVARCHAR" property="denyComment" />
     <result column="cancel_comment" jdbcType="LONGVARCHAR" property="cancelComment" />
+    <result column="agree_comment" jdbcType="LONGVARCHAR" property="agreeComment" />
   </resultMap>
 </mapper>
