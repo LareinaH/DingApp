@@ -180,4 +180,26 @@ public class DingService {
 
         logger.info("send notification {} to user {} success with task id {}", title, userIdList, response.getTaskId());
     }
+
+    public OapiMessageCorpconversationGetsendprogressResponse getSendProgress(Long taskId) throws ExecutionException, ApiException, DingServiceException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/getsendprogress");
+        OapiMessageCorpconversationGetsendprogressRequest request  = new OapiMessageCorpconversationGetsendprogressRequest();
+        request.setAgentId(meetingBookAppAgentId);
+        request.setTaskId(taskId);
+        OapiMessageCorpconversationGetsendprogressResponse response = client.execute(request, getAccessToken());
+        checkResponse(response, "查询消息发送进度失败");
+
+        return response;
+    }
+
+    public OapiMessageCorpconversationGetsendresultResponse getSendResult(Long taskId) throws ExecutionException, ApiException, DingServiceException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/getsendresult");
+        OapiMessageCorpconversationGetsendresultRequest request  = new OapiMessageCorpconversationGetsendresultRequest();
+        request.setAgentId(meetingBookAppAgentId);
+        request.setTaskId(taskId);
+        OapiMessageCorpconversationGetsendresultResponse response = client.execute(request, getAccessToken());
+        checkResponse(response, "查询消息发送结果失败");
+
+        return response;
+    }
 }

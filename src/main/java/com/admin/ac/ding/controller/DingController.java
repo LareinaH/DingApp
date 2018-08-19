@@ -106,14 +106,14 @@ public class DingController extends BaseController {
             dingService.sendNotificationToUser(
                     new ArrayList<>(notificationUsers),
                     "会议室预约申请通知",
-                    "有新的会议室预约申请，请前往查看详情",
+                    String.format("有新的会议室预约申请(申请单号为%d)，请前往查看详情", meetingBook.getId()),
                     meetingBookUrl
             );
 
             dingService.sendNotificationToUser(
                     new ArrayList<>(bookReviewers),
                     "会议室预约审批通知",
-                    "你有一个新的会议室预约申请需要处理，请前往查看详情",
+                    String.format("你有一个新的会议室预约申请需要处理(申请单号为%d)，请前往查看详情", meetingBook.getId()),
                     meetingBookUrl
             );
         } catch (Exception e) {

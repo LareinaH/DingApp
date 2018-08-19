@@ -458,4 +458,15 @@ public class AdminController extends BaseController {
         );
         return RestResponse.getSuccesseResponse();
     }
+
+    @RequestMapping(value = "/querySendResultAll", method = {RequestMethod.GET})
+    public RestResponse<JSONObject> querySendResultAll(
+            Long taskId
+    ) throws ExecutionException, ApiException, DingServiceException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("progress", dingService.getSendProgress(taskId));
+        jsonObject.put("result", dingService.getSendResult(taskId));
+
+        return RestResponse.getSuccesseResponse(jsonObject);
+    }
 }
