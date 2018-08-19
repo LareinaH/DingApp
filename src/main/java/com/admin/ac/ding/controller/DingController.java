@@ -81,7 +81,7 @@ public class DingController extends BaseController {
         meetingBook.setBookStatus(MeetingBookStatus.WAIT_APPROVE.name());
         meetingBookMapper.insert(meetingBook);
 
-        // 通知管理员审核
+        // 通知相关人员
         Example example4 = new Example(MeetingInCharge.class);
         Example.Criteria criteria4 = example4.createCriteria();
         criteria4.andEqualTo("isDeleted", false);
@@ -94,6 +94,10 @@ public class DingController extends BaseController {
         criteria3.andEqualTo("meetingRoomId", meetingBook.getMeetingRoomId());
         List<MeetingMediaInCharge> meetingMediaInChargeList = meetingMediaInChargeMapper.selectByExample(example3);
 
+        RestResponse<List<OapiUserGetWithDeptResponse>> resp = adminController.getSystemRole(SystemRoleType.MEETING_BOOK_REVIEW.name());
+        Set<String> bookReviewers = resp.getData().stream()
+                .map(x -> x.getUserid()).collect(Collectors.toSet());
+
         Set<String> notificationUsers = new TreeSet<>();
         notificationUsers.addAll(meetingInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
         notificationUsers.addAll(meetingMediaInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
@@ -101,8 +105,15 @@ public class DingController extends BaseController {
         try {
             dingService.sendNotificationToUser(
                     new ArrayList<>(notificationUsers),
+                    "会议室预约申请通知",
+                    "有新的会议室预约申请，请前往查看详情",
+                    meetingBookUrl
+            );
+
+            dingService.sendNotificationToUser(
+                    new ArrayList<>(bookReviewers),
                     "会议室预约审批通知",
-                    "你有一个新的会议室预约申请，请前往处理",
+                    "你有一个新的会议室预约申请需要处理，请前往查看详情",
                     meetingBookUrl
             );
         } catch (Exception e) {
@@ -271,7 +282,7 @@ public class DingController extends BaseController {
             if (meetingRoomDetail != null) {
                 dingService.sendNotificationToUser(
                         Arrays.asList(meetingBook.getBookUserId()),
-                        "会议室预约审批通知",
+                        "会议室预约结果通知",
                         String.format(
                                 "你预约的%s%s的会议室:%s,申请结果为:%s,请前往查看详情",
                                 DateFormatUtils.format(
@@ -288,6 +299,37 @@ public class DingController extends BaseController {
                 logger.error("meeting room {} not exist", meetingBook.getMeetingRoomId());
             }
 
+            Example example1 = new Example(MeetingInCharge.class);
+            Example.Criteria criteria1 = example4.createCriteria();
+            criteria1.andEqualTo("isDeleted", false);
+            criteria1.andEqualTo("meetingRoomId", meetingBook.getMeetingRoomId());
+            List<MeetingInCharge> meetingInChargeList = meetingInChargeMapper.selectByExample(example1);
+
+            Example example3 = new Example(MeetingMediaInCharge.class);
+            Example.Criteria criteria3 = example3.createCriteria();
+            criteria3.andEqualTo("isDeleted", false);
+            criteria3.andEqualTo("meetingRoomId", meetingBook.getMeetingRoomId());
+            List<MeetingMediaInCharge> meetingMediaInChargeList = meetingMediaInChargeMapper.selectByExample(example3);
+
+            Set<String> notificationUsers = new TreeSet<>();
+            notificationUsers.addAll(meetingInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
+            notificationUsers.addAll(meetingMediaInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
+
+            dingService.sendNotificationToUser(
+                    Arrays.asList(meetingBook.getBookUserId()),
+                    "会议室预约操作通知",
+                    String.format(
+                            "%s%s的会议室:%s,预约结果为:%s,点击可查看详情列表",
+                            DateFormatUtils.format(
+                                    meetingBook.getBookDay(),
+                                    "yyyy-MM-dd"
+                            ),
+                            MeetingSlot.valueOf(meetingBook.getBookTime()).getDisplayName(),
+                            meetingRoomDetail.getName(),
+                            meetingBookStatus.getDisplayName()
+                    ),
+                    meetingBookUrl
+            );
         } catch (Exception e) {
             logger.error("send notification failed", e);
         }

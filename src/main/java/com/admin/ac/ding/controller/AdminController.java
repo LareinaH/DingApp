@@ -366,7 +366,7 @@ public class AdminController extends BaseController {
     }
 
     @RequestMapping(value = "/getSystemRole", method = {RequestMethod.GET})
-    public RestResponse<List<OapiUserGetResponse>> getSystemRole(
+    public RestResponse<List<OapiUserGetWithDeptResponse>> getSystemRole(
             String role
     ) {
         Example example2 = new Example(SysRole.class);
@@ -377,7 +377,7 @@ public class AdminController extends BaseController {
         return RestResponse.getSuccesseResponse(
                 sysRoleList.stream().map(x -> {
                     try {
-                        return dingService.getUserDetail(x.getUserId());
+                        return cacheService.getUserDetail(x.getUserId());
                     } catch (DingServiceException e) {
                         e.printStackTrace();
                     } catch (ExecutionException e) {

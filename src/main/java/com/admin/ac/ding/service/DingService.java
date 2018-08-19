@@ -178,6 +178,6 @@ public class DingService {
         OapiMessageCorpconversationAsyncsendV2Response response = client.execute(request, getAccessToken());
         checkResponse(response, "发送钉钉通知失败");
 
-        logger.info("send notification to user {} success with task id {}", userIdList, response.getTaskId());
+        logger.info("send notification {} to user {} success with task id {}", title, userIdList, response.getTaskId());
     }
 }
