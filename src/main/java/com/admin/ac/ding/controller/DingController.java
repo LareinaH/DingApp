@@ -257,6 +257,8 @@ public class DingController extends BaseController {
             meetingBook.setDenyComment(comment);
         } else if (MeetingBookStatus.ADMIN_CANCEL.equals(meetingBookStatus)) {
             meetingBook.setCancelComment(comment);
+        } else if (MeetingBookStatus.AGREE.equals(meetingBookStatus)) {
+            meetingBook.setAgreeComment(comment);
         }
 
         meetingBookMapper.updateByPrimaryKey(meetingBook);
