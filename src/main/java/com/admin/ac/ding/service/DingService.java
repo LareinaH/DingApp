@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -157,7 +159,7 @@ public class DingService {
             String title,
             String content,
             String url
-    ) throws ExecutionException, DingServiceException, ApiException {
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2");
 
         OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
@@ -170,7 +172,7 @@ public class DingService {
         msg.setLink(new OapiMessageCorpconversationAsyncsendV2Request.Link());
         msg.getLink().setTitle(title);
         msg.getLink().setText(content);
-        msg.getLink().setMessageUrl(url);
+        msg.getLink().setMessageUrl("dingtalk://dingtalkclient/page/link?url=" + URLEncoder.encode(url, "utf-8"));
         msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5EZVelPOACAAbs4AaQB5_6881401_2097262.png");
 //        msg.getLink().setPicUrl("");
         request.setMsg(msg);

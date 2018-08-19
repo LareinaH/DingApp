@@ -22,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -445,7 +446,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/sendNotificationToUsers", method = {RequestMethod.POST})
     public RestResponse<Void> sendNotificationToUsers(
             String userIds
-    ) throws ExecutionException, ApiException, DingServiceException {
+    ) throws ExecutionException, ApiException, DingServiceException, UnsupportedEncodingException {
         if (StringUtils.isBlank(userIds)) {
             return RestResponse.getFailedResponse(Constants.RcError, "待发送钉钉通知的用户列表为空");
         }
