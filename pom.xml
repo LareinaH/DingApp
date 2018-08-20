@@ -46,10 +46,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 		</dependency>
+		<!--https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-charsets.html-->
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.46</version>
+			<version>5.1.47</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>

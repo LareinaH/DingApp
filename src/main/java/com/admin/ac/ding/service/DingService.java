@@ -173,7 +173,7 @@ public class DingService {
         msg.getLink().setTitle(title);
         msg.getLink().setText(content);
         msg.getLink().setMessageUrl("dingtalk://dingtalkclient/page/link?pc_slide=true&url=" + URLEncoder.encode(url, "utf-8"));
-        msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5EZVelPOACAAbs4AaQB5_6881401_2097262.png");
+        msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
 //        msg.getLink().setPicUrl("");
         request.setMsg(msg);
 
