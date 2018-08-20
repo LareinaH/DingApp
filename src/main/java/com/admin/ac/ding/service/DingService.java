@@ -172,7 +172,7 @@ public class DingService {
         msg.setLink(new OapiMessageCorpconversationAsyncsendV2Request.Link());
         msg.getLink().setTitle(title);
         msg.getLink().setText(content);
-        msg.getLink().setMessageUrl("dingtalk://dingtalkclient/page/link?url=" + URLEncoder.encode(url, "utf-8"));
+        msg.getLink().setMessageUrl("dingtalk://dingtalkclient/page/link?pc_slide=true&url=" + URLEncoder.encode(url, "utf-8"));
         msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5EZVelPOACAAbs4AaQB5_6881401_2097262.png");
 //        msg.getLink().setPicUrl("");
         request.setMsg(msg);

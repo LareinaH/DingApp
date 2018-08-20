@@ -184,6 +184,14 @@ public class DingController extends BaseController {
                             if (meetingRoomDetailMap.containsKey(meetingBookVO.getMeetingRoomId())) {
                                 meetingBookVO.setMeetingRoomDetail(meetingRoomDetailMap.get(meetingBookVO.getMeetingRoomId()));
                             }
+
+                            try {
+                                OapiUserGetWithDeptResponse oapiUserGetResponse = cacheService.getUserDetail(x.getBookUserId());
+                                meetingBookVO.setBookUserDetail(oapiUserGetResponse);
+                            } catch (Exception e) {
+                                logger.error("getUserDetail failed", e);
+                            }
+
                             return meetingBookVO;
                         }).collect(Collectors.toList())
                 )
