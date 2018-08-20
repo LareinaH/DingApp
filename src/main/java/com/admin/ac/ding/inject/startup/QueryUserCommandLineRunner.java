@@ -1,10 +1,14 @@
 package com.admin.ac.ding.inject.startup;
 
+import com.admin.ac.ding.mapper.MeetingBookMapper;
 import com.admin.ac.ding.mapper.MeetingInChargeMapper;
 import com.admin.ac.ding.mapper.MeetingMediaInChargeMapper;
+import com.admin.ac.ding.model.MeetingBook;
 import com.admin.ac.ding.model.MeetingInCharge;
 import com.admin.ac.ding.model.MeetingMediaInCharge;
 import com.admin.ac.ding.service.CacheService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -14,6 +18,7 @@ import java.util.List;
 
 @Component
 public class QueryUserCommandLineRunner implements CommandLineRunner {
+    private Logger logger = LoggerFactory.getLogger(QueryUserCommandLineRunner.class);
 
     @Autowired
     CacheService cacheService;
@@ -23,6 +28,9 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
     @Autowired
     MeetingMediaInChargeMapper meetingMediaInChargeMapper;
+
+    @Autowired
+    MeetingBookMapper meetingBookMapper;
 
     @Override
     public void run(String... strings) throws Exception {
@@ -49,5 +57,20 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
             }
         }
+
+        Example example4 = new Example(MeetingBook.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
+        for (MeetingBook meetingBook : meetingBookList) {
+            try {
+                cacheService.getUserDetail(meetingBook.getBookUserId());
+            } catch (Exception e) {
+
+            }
+        }
+
+        logger.info("cache stat:{}", cacheService.getCacheStat());
+        logger.info("cache keys:{}", cacheService.getCacheKeys());
     }
 }

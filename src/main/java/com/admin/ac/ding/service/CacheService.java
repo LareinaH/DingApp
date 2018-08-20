@@ -10,8 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 public class CacheService {
@@ -49,5 +52,20 @@ public class CacheService {
             deptCacheMap.put(deptId, resp);
             return resp;
         }
+    }
+
+    public Map<String, Integer> getCacheStat() {
+        Map<String, Integer> statMap = new TreeMap<>();
+        statMap.put("userCacheKeyCount", userCacheMap.size());
+        statMap.put("deptCacheKeyCount", deptCacheMap.size());
+        return statMap;
+    }
+
+    public Map<String, Set<String>> getCacheKeys() {
+        Map<String, Set<String>> cacheKeys = new TreeMap<>();
+        cacheKeys.put("userCacheKeys", userCacheMap.keySet());
+        cacheKeys.put("deptCacheKeys", deptCacheMap.keySet().stream().map(x -> String.valueOf(x)).collect(Collectors.toSet()));
+
+        return cacheKeys;
     }
 }
