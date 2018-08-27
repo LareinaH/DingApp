@@ -21,6 +21,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<mysql.connector.version>5.1.47</mysql.connector.version>
+		<tk.mybatis.version>4.0.3</tk.mybatis.version>
 	</properties>
 
 	<dependencies>
@@ -50,30 +52,30 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.47</version>
+			<version>${mysql.connector.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>druid-spring-boot-starter</artifactId>
 			<version>1.1.10</version>
 		</dependency>
-		<dependency>
-			<groupId>org.activiti</groupId>
-			<artifactId>activiti-spring-boot-starter-basic</artifactId>
-			<version>5.22.0</version>
-		</dependency>
+		<!--<dependency>-->
+			<!--<groupId>org.activiti</groupId>-->
+			<!--<artifactId>activiti-spring-boot-starter-basic</artifactId>-->
+			<!--<version>5.22.0</version>-->
+		<!--</dependency>-->
 		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
+		<!--<dependency>-->
+			<!--<groupId>org.springframework.boot</groupId>-->
+			<!--<artifactId>spring-boot-starter-data-jpa</artifactId>-->
+		<!--</dependency>-->
 
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator -->
-		<dependency>
-			<groupId>com.fasterxml.uuid</groupId>
-			<artifactId>java-uuid-generator</artifactId>
-			<version>3.1.5</version>
-		</dependency>
+		<!--<dependency>-->
+			<!--<groupId>com.fasterxml.uuid</groupId>-->
+			<!--<artifactId>java-uuid-generator</artifactId>-->
+			<!--<version>3.1.5</version>-->
+		<!--</dependency>-->
 		<!-- https://mvnrepository.com/artifact/org.mybatis.generator/mybatis-generator-core -->
 		<dependency>
 			<groupId>org.mybatis.generator</groupId>
@@ -84,7 +86,7 @@
 		<dependency>
 			<groupId>tk.mybatis</groupId>
 			<artifactId>mapper</artifactId>
-			<version>4.0.3</version>
+			<version>${tk.mybatis.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.pagehelper/pagehelper-spring-boot-starter -->
 		<dependency>
@@ -96,7 +98,7 @@
 		<dependency>
 			<groupId>com.admin.ac.ding</groupId>
 			<artifactId>dingtalk-sdk</artifactId>
-			<version>18.8.8</version>
+			<version>18.8.17</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
@@ -116,6 +118,12 @@
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.11</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.8</version>
 		</dependency>
 	</dependencies>
 
@@ -140,12 +148,12 @@
 					<dependency>
 						<groupId>mysql</groupId>
 						<artifactId>mysql-connector-java</artifactId>
-						<version>5.1.46</version>
+						<version>${mysql.connector.version}</version>
 					</dependency>
 					<dependency>
 						<groupId>tk.mybatis</groupId>
 						<artifactId>mapper</artifactId>
-						<version>4.0.3</version>
+						<version>${tk.mybatis.version}</version>
 					</dependency>
 				</dependencies>
 			</plugin>

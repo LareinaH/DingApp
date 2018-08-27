@@ -1,11 +1,7 @@
 package com.admin.ac.ding.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 钉钉jsapi签名工具类

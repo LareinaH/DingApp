@@ -3,9 +3,11 @@ package com.admin.ac.ding.inject.startup;
 import com.admin.ac.ding.mapper.MeetingBookMapper;
 import com.admin.ac.ding.mapper.MeetingInChargeMapper;
 import com.admin.ac.ding.mapper.MeetingMediaInChargeMapper;
+import com.admin.ac.ding.mapper.SysRoleMapper;
 import com.admin.ac.ding.model.MeetingBook;
 import com.admin.ac.ding.model.MeetingInCharge;
 import com.admin.ac.ding.model.MeetingMediaInCharge;
+import com.admin.ac.ding.model.SysRole;
 import com.admin.ac.ding.service.CacheService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,9 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
     @Autowired
     MeetingBookMapper meetingBookMapper;
+
+    @Autowired
+    SysRoleMapper sysRoleMapper;
 
     @Override
     public void run(String... strings) throws Exception {
@@ -65,6 +70,18 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
         for (MeetingBook meetingBook : meetingBookList) {
             try {
                 cacheService.getUserDetail(meetingBook.getBookUserId());
+            } catch (Exception e) {
+
+            }
+        }
+
+        Example exampleSysRole = new Example(SysRole.class);
+        Example.Criteria criteriaSysRole = exampleSysRole.createCriteria();
+        criteriaSysRole.andEqualTo("isDeleted", false);
+        List<SysRole> sysRoleList = sysRoleMapper.selectByExample(exampleSysRole);
+        for (SysRole sysRole : sysRoleList) {
+            try {
+                cacheService.getUserDetail(sysRole.getUserId());
             } catch (Exception e) {
 
             }

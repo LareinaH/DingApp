@@ -34,7 +34,71 @@
         <javaClientGenerator targetPackage="com.admin.ac.ding.mapper" targetProject="src/main/java"
                              type="XMLMAPPER"/>
 
-        <table tableName="sys_role">
+        <!--<table tableName="sys_role">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="privileged_dept">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="meeting_status">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="meeting_room_detail">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="meeting_pics">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="meeting_media_in_charge">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="meeting_in_charge">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <!--<table tableName="meeting_book">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
+
+        <table tableName="repair_apply">
             <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
             <ignoreColumn column="id" />
             <ignoreColumn column="is_deleted" />
@@ -42,7 +106,7 @@
             <ignoreColumn column="gmt_modify" />
         </table>
 
-        <table tableName="privileged_dept">
+        <table tableName="repair_group">
             <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
             <ignoreColumn column="id" />
             <ignoreColumn column="is_deleted" />
@@ -50,7 +114,7 @@
             <ignoreColumn column="gmt_modify" />
         </table>
 
-        <table tableName="meeting_status">
+        <table tableName="repair_sub_type">
             <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
             <ignoreColumn column="id" />
             <ignoreColumn column="is_deleted" />
@@ -58,39 +122,7 @@
             <ignoreColumn column="gmt_modify" />
         </table>
 
-        <table tableName="meeting_room_detail">
-            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
-            <ignoreColumn column="id" />
-            <ignoreColumn column="is_deleted" />
-            <ignoreColumn column="gmt_create" />
-            <ignoreColumn column="gmt_modify" />
-        </table>
-
-        <table tableName="meeting_pics">
-            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
-            <ignoreColumn column="id" />
-            <ignoreColumn column="is_deleted" />
-            <ignoreColumn column="gmt_create" />
-            <ignoreColumn column="gmt_modify" />
-        </table>
-
-        <table tableName="meeting_media_in_charge">
-            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
-            <ignoreColumn column="id" />
-            <ignoreColumn column="is_deleted" />
-            <ignoreColumn column="gmt_create" />
-            <ignoreColumn column="gmt_modify" />
-        </table>
-
-        <table tableName="meeting_in_charge">
-            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
-            <ignoreColumn column="id" />
-            <ignoreColumn column="is_deleted" />
-            <ignoreColumn column="gmt_create" />
-            <ignoreColumn column="gmt_modify" />
-        </table>
-
-        <table tableName="meeting_book">
+        <table tableName="repair_type">
             <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
             <ignoreColumn column="id" />
             <ignoreColumn column="is_deleted" />

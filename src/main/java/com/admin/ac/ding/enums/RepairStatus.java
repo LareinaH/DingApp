@@ -7,15 +7,15 @@ package com.admin.ac.ding.enums;
  * @version 1.0
  * @date 2018/6/1
  */
-public enum SystemRoleType {
-    CUSTOMER_SERVICE("接线员"),
-    PRIVILEGED_PERSON("特权人"),
-    SYS_ADMIN("系统管理员"),
-    MEETING_BOOK_REVIEW("会议室申请审核员");
+public enum RepairStatus {
+    WAIT_CONFIRM("等待维修班组长确认"),
+    WAIT_REPAIR("等待维修"),
+    REPAIR_COMPLETE("维修完成,等待评价"),
+    ORDER_COMPLETE("维修单结束");
 
     private String displayName;
 
-    SystemRoleType(String displayName){
+    RepairStatus(String displayName){
 
         this.displayName = displayName;
     }
