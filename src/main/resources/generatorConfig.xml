@@ -17,8 +17,8 @@
         </plugin>
 
         <jdbcConnection driverClass="com.mysql.jdbc.Driver"
-                        connectionURL="jdbc:mysql://23.88.61.181:3306/ding"
-                        userId="lareina"
+                        connectionURL="jdbc:mysql://rm-m5ep24m25q1193lp70o.mysql.rds.aliyuncs.com:3306/ding"
+                        userId="root"
                         password="1qaz@WSX">
         </jdbcConnection>
 
