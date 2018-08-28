@@ -439,6 +439,7 @@ public class DingController extends BaseController {
         repairApply.setRepairProcUserId(repairManId);
         repairApply.setRepairDuration(repairDuration);
         repairApply.setGmtConfirm(new Date());
+        repairApply.setRepairStatus(RepairStatus.WAIT_REPAIR.name());
         repairApplyMapper.updateByPrimaryKey(repairApply);
 
         RepairSrcType repairSrcType = RepairSrcType.valueOf(repairApply.getSrcType());
