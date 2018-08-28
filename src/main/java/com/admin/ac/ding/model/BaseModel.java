@@ -34,10 +34,10 @@ public class BaseModel implements Serializable {
 	private Boolean isDeleted = false;
 
 	@Column(name = "gmt_create")
-	private Date gmtCreate = new Date();
+	private Date gmtCreate;
 
 	@Column(name = "gmt_modify")
-	private Date gmtModify = new Date();
+	private Date gmtModify;
 
 
 	public Long getId() {

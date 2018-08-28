@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/admin", produces = "application/json; charset=UTF-8")
@@ -55,6 +56,18 @@ public class AdminController extends BaseController {
 
     @Autowired
     CacheService cacheService;
+
+    @Autowired
+    RepairTypeMapper repairTypeMapper;
+
+    @Autowired
+    RepairSubTypeMapper repairSubTypeMapper;
+
+    @Autowired
+    RepairGroupMapper repairGroupMapper;
+
+    @Autowired
+    RepairManGroupMapper repairManGroupMapper;
 
     @RequestMapping(value = "/getMeetingRoomList", method = {RequestMethod.GET})
     public RestResponse<List<MeetingRoomDetailVO>> getMeetingRoomList() {
@@ -469,5 +482,69 @@ public class AdminController extends BaseController {
         jsonObject.put("result", dingService.getSendResult(taskId));
 
         return RestResponse.getSuccesseResponse(jsonObject);
+    }
+
+    @RequestMapping(value = "/addRepairType", method = {RequestMethod.POST})
+    public RestResponse<Void> addRepairType(
+            String repairType
+    ) {
+        RepairType repairType1 = new RepairType();
+        repairType1.setRepairType(repairType);
+        repairTypeMapper.insert(repairType1);
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/addRepairSubType", method = {RequestMethod.POST})
+    public RestResponse<Void> addRepairType(
+            Long repairTypeId,
+            String repairSubTypes
+    ) {
+        List<RepairSubType> repairSubTypeList  =
+        Stream.of(repairSubTypes.split(",", -1))
+                .filter(x -> StringUtils.isNotBlank(x))
+                .map(x -> {
+                    RepairSubType repairSubType1 = new RepairSubType();
+                    repairSubType1.setRepairTypeId(repairTypeId);
+                    repairSubType1.setRepairSubType(x);
+                    return repairSubType1;
+                }).collect(Collectors.toList());
+
+        repairSubTypeMapper.insertList(repairSubTypeList);
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/addRepairGroup", method = {RequestMethod.POST})
+    public RestResponse<Void> addRepairGroup(
+            Long repairTypeId,
+            String userId
+    ) {
+        RepairGroup repairGroup = new RepairGroup();
+        repairGroup.setRepairType(repairTypeId);
+        repairGroup.setSupervisorUserId(userId);
+        repairGroupMapper.insert(repairGroup);
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/addRepairManGroup", method = {RequestMethod.POST})
+    public RestResponse<Void> addRepairManGroup(
+            Long repairTypeId,
+            String name,
+            String phone
+    ) {
+        if (StringUtils.isBlank(name)) {
+            return RestResponse.getFailedResponse(Constants.RcError, "维修人员姓名不能为空");
+        }
+
+        RepairManGroup repairManGroup = new RepairManGroup();
+        repairManGroup.setRepairType(repairTypeId);
+        repairManGroup.setName(name);
+        repairManGroup.setPhone(phone);
+
+        repairManGroupMapper.insert(repairManGroup);
+
+        return RestResponse.getSuccesseResponse();
     }
 }

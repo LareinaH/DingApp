@@ -129,5 +129,13 @@
             <ignoreColumn column="gmt_create" />
             <ignoreColumn column="gmt_modify" />
         </table>
+
+        <table tableName="repair_man_group">
+            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
+            <ignoreColumn column="id" />
+            <ignoreColumn column="is_deleted" />
+            <ignoreColumn column="gmt_create" />
+            <ignoreColumn column="gmt_modify" />
+        </table>
     </context>
 </generatorConfiguration>

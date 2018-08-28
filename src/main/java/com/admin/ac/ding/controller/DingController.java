@@ -1,9 +1,7 @@
 package com.admin.ac.ding.controller;
 
 import com.admin.ac.ding.constants.Constants;
-import com.admin.ac.ding.enums.MeetingBookStatus;
-import com.admin.ac.ding.enums.MeetingSlot;
-import com.admin.ac.ding.enums.SystemRoleType;
+import com.admin.ac.ding.enums.*;
 import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
@@ -25,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -65,8 +64,26 @@ public class DingController extends BaseController {
     @Autowired
     CacheService cacheService;
 
+    @Autowired
+    RepairApplyMapper repairApplyMapper;
+
+    @Autowired
+    RepairTypeMapper repairTypeMapper;
+
+    @Autowired
+    RepairSubTypeMapper repairSubTypeMapper;
+
+    @Autowired
+    RepairGroupMapper repairGroupMapper;
+
+    @Autowired
+    RepairManGroupMapper repairManGroupMapper;
+
     @Value("${ding.app.meetingbook.url}")
     String meetingBookUrl;
+
+    @Value("${ding.app.repair.url")
+    String repairListUrl;
 
     @RequestMapping(value = "/meetingBookApply", method = {RequestMethod.POST})
     public RestResponse<Void> meetingBookApply(
@@ -373,5 +390,210 @@ public class DingController extends BaseController {
         }
 
         return RestResponse.getSuccesseResponse(meetingRoomDetailVOList);
+    }
+
+    @RequestMapping(value = "/repairApply", method = {RequestMethod.POST})
+    public RestResponse<Void> repairApply(
+            @RequestBody RepairApply repairApply
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
+        repairApply.setRepairStatus(RepairStatus.WAIT_CONFIRM.name());
+        repairApplyMapper.insert(repairApply);
+
+        // 通知维修组长确认
+        RepairGroup repairGroup = new RepairGroup();
+        repairGroup.setRepairType(repairApply.getRepairType());
+        List<RepairGroup> repairGroupList = repairGroupMapper.select(repairGroup);
+        dingService.sendNotificationToUser(
+                repairGroupList.stream().map(x -> x.getSupervisorUserId()).collect(Collectors.toList()),
+                "维修确认通知",
+                String.format(
+                        "有新的维修工单(申请单号为%d),请前往处理",
+                        repairApply.getId()
+                ),
+                repairListUrl
+        );
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/dispatchRepairOrder", method = {RequestMethod.POST})
+    public RestResponse<Void> dispatchRepairOrder(
+            Long repairApplyId,
+            Long repairManId,
+            String repairDuration
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
+        RepairApply repairApply = repairApplyMapper.selectByPrimaryKey(repairApplyId);
+        if (repairApply == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到维修单:" + repairApplyId);
+        }
+
+        if (!RepairStatus.WAIT_CONFIRM.name().equals(repairApply.getRepairStatus())) {
+            return RestResponse.getFailedResponse(Constants.RcError, String.format("维修单当前状态为:%s,无法被派遣", RepairStatus.valueOf(repairApply.getRepairStatus()).getDisplayName()));
+        }
+
+        RepairManGroup repairManGroup = repairManGroupMapper.selectByPrimaryKey(repairManId);
+        if (repairManGroup == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, String.format("指定的维修人员(%d)不存在", repairManId));
+        }
+
+        repairApply.setRepairProcUserId(repairManId);
+        repairApply.setRepairDuration(repairDuration);
+        repairApply.setGmtConfirm(new Date());
+        repairApplyMapper.updateByPrimaryKey(repairApply);
+
+        RepairSrcType repairSrcType = RepairSrcType.valueOf(repairApply.getSrcType());
+        // 通知提交人维修完成
+        if (repairSrcType.equals(RepairSrcType.USER)) {
+            dingService.sendNotificationToUser(
+                    Arrays.asList(repairApply.getSubmitUserId()),
+                    "维修派遣通知",
+                    String.format(
+                            "您提交的维修工单(申请单号为%d)已安排维修人员%s前往处理,请耐心等候",
+                            repairApply.getId(),
+                            repairManGroup.getName()
+                    ),
+                    repairListUrl
+            );
+        } else if (repairSrcType.equals(RepairSrcType.SERVICE)) {
+            dingService.sendNotificationToUser(
+                    Arrays.asList(repairApply.getSubmitUserId()),
+                    "维修派遣通知",
+                    String.format(
+                            "您提交的维修工单(申请单号为%d)已安排维修人员%s前往处理,请及时通知提交人%s(%s)维修进展",
+                            repairApply.getId(),
+                            repairApply.getRealUserName(),
+                            repairApply.getRealUserPhone()
+                    ),
+                    repairListUrl
+            );
+        }
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/completeRepairOrder", method = {RequestMethod.POST})
+    public RestResponse<Void> completeRepairOrder(
+            Long repairApplyId
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
+        RepairApply repairApply = repairApplyMapper.selectByPrimaryKey(repairApplyId);
+        if (repairApply == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到维修单:" + repairApplyId);
+        }
+
+        if (!RepairStatus.WAIT_REPAIR.name().equals(repairApply.getRepairStatus())) {
+            return RestResponse.getFailedResponse(Constants.RcError, String.format("维修单当前状态为:%s,无法操作完成", RepairStatus.valueOf(repairApply.getRepairStatus()).getDisplayName()));
+        }
+
+        repairApply.setRepairStatus(RepairStatus.REPAIR_COMPLETE.name());
+        repairApply.setGmtRepairComplete(new Date());
+        repairApplyMapper.updateByPrimaryKey(repairApply);
+
+        RepairSrcType repairSrcType = RepairSrcType.valueOf(repairApply.getSrcType());
+        // 通知提交人维修完成
+        if (repairSrcType.equals(RepairSrcType.USER)) {
+            dingService.sendNotificationToUser(
+                    Arrays.asList(repairApply.getSubmitUserId()),
+                    "维修完成通知",
+                    String.format(
+                            "您提交的维修工单(申请单号为%d)已维修完毕,请对本次服务提出评价",
+                            repairApply.getId()
+                    ),
+                    repairListUrl
+            );
+        } else if (repairSrcType.equals(RepairSrcType.SERVICE)) {
+            dingService.sendNotificationToUser(
+                    Arrays.asList(repairApply.getSubmitUserId()),
+                    "维修完成通知",
+                    String.format(
+                            "您提交的维修工单(申请单号为%d)已维修完毕,请及时通知提交人%s(%s)维修进展",
+                            repairApply.getId(),
+                            repairApply.getRealUserName(),
+                            repairApply.getRealUserPhone()
+                    ),
+                    repairListUrl
+            );
+        }
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/scoreRepairOrder", method = {RequestMethod.POST})
+    public RestResponse<Void> scoreRepairOrder(
+            Long repairApplyId,
+            Integer score,
+            String scoreComment
+    ) {
+        RepairApply repairApply = repairApplyMapper.selectByPrimaryKey(repairApplyId);
+        if (repairApply == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到维修单:" + repairApplyId);
+        }
+
+        if (!RepairStatus.REPAIR_COMPLETE.name().equals(repairApply.getRepairStatus())) {
+            return RestResponse.getFailedResponse(Constants.RcError, String.format("维修单当前状态为:%s,无法评价", RepairStatus.valueOf(repairApply.getRepairStatus()).getDisplayName()));
+        }
+
+        if (score < 1 || score > 5) {
+            return RestResponse.getFailedResponse(Constants.RcError, "评分的范围是1-5");
+        }
+
+        repairApply.setScore(score);
+        repairApply.setScoreComment(scoreComment);
+        repairApply.setRepairStatus(RepairStatus.ORDER_COMPLETE.name());
+        repairApply.setGmtScore(new Date());
+        repairApplyMapper.updateByPrimaryKey(repairApply);
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/getRepairTypeTree", method = {RequestMethod.GET})
+    public RestResponse<List<RepairTypeTreeVO>> getRepairTypeTree() {
+        RepairType p1 = new RepairType();
+        List<RepairType> repairTypeList = repairTypeMapper.select(p1);
+
+        return RestResponse.getSuccesseResponse(
+                repairTypeList.stream().map(x -> {
+                    RepairTypeTreeVO repairTypeTreeVO = new RepairTypeTreeVO();
+                    repairTypeTreeVO.setValue(x.getId());
+                    repairTypeTreeVO.setText(x.getRepairType());
+                    // 查找子类型
+                    RepairSubType p2 = new RepairSubType();
+                    p2.setRepairTypeId(x.getId());
+                    List<RepairSubType> repairSubTypeList = repairSubTypeMapper.select(p2);
+                    repairTypeTreeVO.setChildren(
+                            repairSubTypeList.stream().map(y -> {
+                                RepairSubTypeVO repairSubTypeVO = new RepairSubTypeVO();
+                                repairSubTypeVO.setValue(y.getId());
+                                repairSubTypeVO.setText(y.getRepairSubType());
+                                return repairSubTypeVO;
+                            }).collect(Collectors.toList())
+                    );
+                    // 查找维修组长
+                    RepairGroup p3 = new RepairGroup();
+                    p3.setRepairType(x.getId());
+                    List<RepairGroup> repairGroupList = repairGroupMapper.select(p3);
+                    repairTypeTreeVO.setSupervisorList(
+                            repairGroupList.stream().map(z -> {
+                                try {
+                                    return cacheService.getUserDetail(z.getSupervisorUserId());
+                                } catch (ExecutionException e) {
+                                    e.printStackTrace();
+                                } catch (ApiException e) {
+                                    e.printStackTrace();
+                                } catch (DingServiceException e) {
+                                    e.printStackTrace();
+                                }
+
+                                return null;
+                            }).filter(zz -> zz != null).collect(Collectors.toList())
+                    );
+
+                    // 查找维修工列表
+                    RepairManGroup p4 = new RepairManGroup();
+                    p4.setRepairType(x.getId());
+                    List<RepairManGroup> repairManGroupList = repairManGroupMapper.select(p4);
+                    repairTypeTreeVO.setRepairManGroupList(repairManGroupList);
+                    return repairTypeTreeVO;
+                }).collect(Collectors.toList())
+        );
     }
 }
