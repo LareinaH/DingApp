@@ -7,6 +7,7 @@ import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.DingService;
 import com.admin.ac.ding.service.CacheService;
+import com.admin.ac.ding.utils.MyDateUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
@@ -14,6 +15,7 @@ import com.github.pagehelper.PageInfo;
 import com.taobao.api.ApiException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -24,10 +26,12 @@ import org.springframework.web.bind.annotation.*;
 import tk.mybatis.mapper.entity.Example;
 
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/ding", produces = "application/json; charset=UTF-8")
@@ -418,6 +422,7 @@ public class DingController extends BaseController {
 
     @RequestMapping(value = "/dispatchRepairOrder", method = {RequestMethod.POST})
     public RestResponse<Void> dispatchRepairOrder(
+            String dispatcherUserId,
             Long repairApplyId,
             Long repairManId,
             String repairDuration
@@ -436,6 +441,7 @@ public class DingController extends BaseController {
             return RestResponse.getFailedResponse(Constants.RcError, String.format("指定的维修人员(%d)不存在", repairManId));
         }
 
+        repairApply.setDispatcherUserId(dispatcherUserId);
         repairApply.setRepairProcUserId(repairManId);
         repairApply.setRepairDuration(repairDuration);
         repairApply.setGmtConfirm(new Date());
@@ -474,6 +480,7 @@ public class DingController extends BaseController {
 
     @RequestMapping(value = "/completeRepairOrder", method = {RequestMethod.POST})
     public RestResponse<Void> completeRepairOrder(
+            String completeUserId,
             Long repairApplyId
     ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
         RepairApply repairApply = repairApplyMapper.selectByPrimaryKey(repairApplyId);
@@ -485,6 +492,7 @@ public class DingController extends BaseController {
             return RestResponse.getFailedResponse(Constants.RcError, String.format("维修单当前状态为:%s,无法操作完成", RepairStatus.valueOf(repairApply.getRepairStatus()).getDisplayName()));
         }
 
+        repairApply.setCompleteUserId(completeUserId);
         repairApply.setRepairStatus(RepairStatus.REPAIR_COMPLETE.name());
         repairApply.setGmtRepairComplete(new Date());
         repairApplyMapper.updateByPrimaryKey(repairApply);
@@ -596,5 +604,183 @@ public class DingController extends BaseController {
                     return repairTypeTreeVO;
                 }).collect(Collectors.toList())
         );
+    }
+
+    @RequestMapping(value = "/getRepairApplyDetail", method = {RequestMethod.GET})
+    public RestResponse<RepairApplyDetailVO> getRepairApplyDetail(
+            Long repairApplyId
+    ) throws ExecutionException, ApiException, DingServiceException {
+        RepairApply repairApply = repairApplyMapper.selectByPrimaryKey(repairApplyId);
+        if (repairApply == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到维修单:" + repairApplyId);
+        }
+
+        RepairManGroup repairManGroup = repairManGroupMapper.selectByPrimaryKey(repairApply.getRepairProcUserId());
+
+        RepairApplyDetailVO repairApplyDetailVO = new RepairApplyDetailVO();
+        BeanUtils.copyProperties(repairApply, repairApplyDetailVO);
+
+        repairApplyDetailVO.setSubmitUserDetail(cacheService.getUserDetail(repairApply.getSubmitUserId()));
+        repairApplyDetailVO.setRepairManGroup(repairManGroup);
+        repairApplyDetailVO.setRepairTypeDetail(repairTypeMapper.selectByPrimaryKey(repairApply.getRepairType()));
+        repairApplyDetailVO.setRepairSubTypeDetail(repairSubTypeMapper.selectByPrimaryKey(repairApply.getRepairSubType()));
+
+        return RestResponse.getSuccesseResponse(repairApplyDetailVO);
+    }
+
+    @RequestMapping(value = "/queryRepairApplyDetails", method = {RequestMethod.GET})
+    public RestResponse<List<RepairApplyDetailVO>> queryRepairApplyDetails(
+            String submitUserId,
+            Long repairTypeId,
+            Long repairSubTypeId,
+            String srcType,
+            String repairStatus,
+            Long repairManId,
+            String scoreList,
+            String gmtStart,
+            String gmtEnd
+    ) throws ExecutionException, ApiException, DingServiceException, ParseException {
+        RepairApply param = new RepairApply();
+        if (StringUtils.isNotBlank(submitUserId)) {
+            param.setSubmitUserId(submitUserId);
+        }
+        if (repairTypeId != null) {
+            param.setRepairType(repairTypeId);
+        }
+        if (repairSubTypeId != null) {
+            param.setRepairSubType(repairSubTypeId);
+        }
+        if (StringUtils.isNotBlank(srcType)) {
+            param.setSrcType(srcType);
+        }
+        if (StringUtils.isNotBlank(repairStatus)) {
+            param.setRepairStatus(repairStatus);
+        }
+        if (repairManId != null) {
+            param.setRepairProcUserId(repairManId);
+        }
+        List<RepairApply> repairApplyList = repairApplyMapper.select(param);
+
+        if (StringUtils.isNotBlank(scoreList)) {
+            Set<Integer> scoreSet = Stream.of(scoreList.split(",", -1)).map(x -> Integer.valueOf(x)).collect(Collectors.toSet());
+            repairApplyList = repairApplyList.stream().filter(x -> {
+                if (scoreSet.contains(Integer.valueOf(5))) {
+                    // 未评价的也算好评
+                    return x.getScore() == null || scoreSet.contains(x.getScore());
+                } else {
+                    return scoreSet.contains(x.getScore());
+                }
+            }).collect(Collectors.toList());
+        }
+
+        if (StringUtils.isNotBlank(gmtStart)) {
+            Date d = DateUtils.parseDate(gmtStart, "yyyy-MM-dd");
+            repairApplyList = repairApplyList.stream().filter(x -> x.getGmtCreate().after(d)).collect(Collectors.toList());
+        }
+
+        if (StringUtils.isNotBlank(gmtEnd)) {
+            Date d = DateUtils.parseDate(gmtEnd + " 23:59:59", "yyyy-MM-dd hh:mm:ss");
+            repairApplyList = repairApplyList.stream().filter(x -> x.getGmtCreate().before(d)).collect(Collectors.toList());
+        }
+
+        RepairManGroup repairManGroup = new RepairManGroup();
+        List<RepairManGroup> repairManGroupList = repairManGroupMapper.select(repairManGroup);
+        Map<Long, RepairManGroup> repairManGroupMap = repairManGroupList.stream().collect(Collectors.toMap(RepairManGroup::getId, Function.identity()));
+
+        Map<Long, RepairType> repairTypeMap = repairTypeMapper.select(new RepairType()).stream()
+                .collect(Collectors.toMap(RepairType::getId, Function.identity()));
+
+        Map<Long, RepairSubType> repairSubTypeMap = repairSubTypeMapper.select(new RepairSubType()).stream()
+                .collect(Collectors.toMap(RepairSubType::getId, Function.identity()));
+
+        return RestResponse.getSuccesseResponse(
+                repairApplyList.stream().map(x -> {
+                    RepairApplyDetailVO repairApplyDetailVO = new RepairApplyDetailVO();
+                    BeanUtils.copyProperties(x, repairApplyDetailVO);
+
+                    try {
+                        repairApplyDetailVO.setSubmitUserDetail(cacheService.getUserDetail(x.getSubmitUserId()));
+                        if (x.getRepairProcUserId() != null && repairManGroupMap.containsKey(x.getRepairProcUserId())) {
+                            repairApplyDetailVO.setRepairManGroup(repairManGroupMap.get(x.getRepairProcUserId()));
+                        }
+
+                        if (repairTypeMap.containsKey(x.getRepairType())) {
+                            repairApplyDetailVO.setRepairTypeDetail(repairTypeMap.get(x.getRepairType()));
+                        }
+
+                        if (repairSubTypeMap.containsKey(x.getRepairSubType())) {
+                            repairApplyDetailVO.setRepairSubTypeDetail(repairSubTypeMap.get(x.getRepairSubType()));
+                        }
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    } catch (ApiException e) {
+                        e.printStackTrace();
+                    } catch (DingServiceException e) {
+                        e.printStackTrace();
+                    }
+
+                    return repairApplyDetailVO;
+                }).collect(Collectors.toList())
+        );
+    }
+
+    @RequestMapping(value = "/queryRepairTypeStats", method = {RequestMethod.GET})
+    public RestResponse<List<JSONObject>> queryRepairTypeStats(
+            Long repairTypeId
+    ) {
+        RepairApply p = new RepairApply();
+        p.setRepairType(repairTypeId);
+        List<RepairApply> repairApplyList = repairApplyMapper.select(p);
+
+        // 取维修完成和评价完成的工单
+        Map<Long, List<RepairApply>> repairApplyMap = repairApplyList.stream()
+                .filter(x -> RepairStatus.REPAIR_COMPLETE.name().equals(x.getRepairStatus()) || RepairStatus.ORDER_COMPLETE.name().equals(x.getRepairStatus()))
+                .collect(Collectors.groupingBy(RepairApply::getRepairProcUserId));
+
+        // 查一下所有维修人员
+        RepairManGroup repairManGroup = new RepairManGroup();
+        List<RepairManGroup> repairManGroupList = repairManGroupMapper.select(repairManGroup);
+        Map<Long, RepairManGroup> repairManGroupMap = repairManGroupList.stream().collect(Collectors.toMap(RepairManGroup::getId, Function.identity()));
+
+        List<JSONObject> result = new ArrayList<>();
+        for (Map.Entry<Long, List<RepairApply>> longListEntry : repairApplyMap.entrySet()) {
+            Long repairManId = longListEntry.getKey();
+            List<RepairApply> repairListForMan = longListEntry.getValue();
+            JSONObject jsonObject = new JSONObject();
+            if (repairManGroupMap.containsKey(repairManId)) {
+                RepairManGroup rmg = repairManGroupMap.get(repairManId);
+                jsonObject.put("name", rmg.getName());
+                jsonObject.put("phone", rmg.getPhone());
+
+                // 统计历史总数
+                long total = repairListForMan.size();
+                long goodTotal = repairListForMan.stream().filter(x -> x.getScore() >= 5 || x.getScore() == null).count();
+                jsonObject.put("total", total);
+                jsonObject.put("goodTotal", goodTotal);
+                if (total <= 0) {
+                    jsonObject.put("goodTotalRate", "0.0%");
+                } else {
+                    jsonObject.put("goodTotalRate", String.format("%.1f%%", (double)goodTotal / total));
+                }
+
+                // 统计本月
+                Date date = new Date();
+                long totalMonth = repairListForMan.stream().filter(x -> MyDateUtils.isSameMonth(x.getGmtCreate(), date)).count();
+                long goodTotalMonth = repairListForMan.stream().filter(x -> MyDateUtils.isSameMonth(x.getGmtCreate(), date))
+                        .filter(x -> x.getScore() >= 5 || x.getScore() == null).count();
+                jsonObject.put("totalMonth", totalMonth);
+                jsonObject.put("goodTotalMonth", goodTotalMonth);
+                if (totalMonth <= 0) {
+                    jsonObject.put("goodTotalMonthRate", "0.0%");
+                } else {
+                    jsonObject.put("goodTotalMonthRate", String.format("%.2f%%", (double)goodTotalMonth / totalMonth));
+                }
+
+
+                result.add(jsonObject);
+            }
+        }
+
+        return RestResponse.getSuccesseResponse(result);
     }
 }

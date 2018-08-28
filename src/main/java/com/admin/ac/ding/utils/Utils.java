@@ -1,7 +1,5 @@
 package com.admin.ac.ding.utils;
 
-import java.security.MessageDigest;
-import java.util.Arrays;
 import java.util.Random;
 
 /**

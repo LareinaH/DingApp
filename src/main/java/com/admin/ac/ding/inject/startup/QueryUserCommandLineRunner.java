@@ -1,10 +1,12 @@
 package com.admin.ac.ding.inject.startup;
 
+import com.admin.ac.ding.enums.RepairSrcType;
 import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.CacheService;
 import com.taobao.api.ApiException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
     @Autowired
     RepairGroupMapper repairGroupMapper;
+
+    @Autowired
+    RepairApplyMapper repairApplyMapper;
 
     @Override
     public void run(String... strings) throws Exception {
@@ -90,6 +95,25 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
         repairGroupMapper.select(new RepairGroup()).forEach(x -> {
             try {
                 cacheService.getUserDetail(x.getSupervisorUserId());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (ApiException e) {
+                e.printStackTrace();
+            } catch (DingServiceException e) {
+                e.printStackTrace();
+            }
+        });
+
+        repairApplyMapper.select(new RepairApply()).forEach(x -> {
+            try {
+                cacheService.getUserDetail(x.getSubmitUserId());
+                if (StringUtils.isNotBlank(x.getDispatcherUserId())) {
+                    cacheService.getUserDetail(x.getDispatcherUserId());
+                }
+
+                if (StringUtils.isNotBlank(x.getCompleteUserId())) {
+                    cacheService.getUserDetail(x.getCompleteUserId());
+                }
             } catch (ExecutionException e) {
                 e.printStackTrace();
             } catch (ApiException e) {

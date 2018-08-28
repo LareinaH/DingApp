@@ -495,6 +495,15 @@ public class AdminController extends BaseController {
         return RestResponse.getSuccesseResponse();
     }
 
+    @RequestMapping(value = "/delRepairType", method = {RequestMethod.POST})
+    public RestResponse<Void> delRepairType(
+            Long id
+    ) {
+        repairTypeMapper.delRepairType(id);
+
+        return RestResponse.getSuccesseResponse();
+    }
+
     @RequestMapping(value = "/addRepairSubType", method = {RequestMethod.POST})
     public RestResponse<Void> addRepairType(
             Long repairTypeId,
@@ -515,6 +524,15 @@ public class AdminController extends BaseController {
         return RestResponse.getSuccesseResponse();
     }
 
+    @RequestMapping(value = "/delRepairSubType", method = {RequestMethod.POST})
+    public RestResponse<Void> delRepairSubType(
+            Long id
+    ) {
+        repairSubTypeMapper.delRepairSubType(id);
+        return RestResponse.getSuccesseResponse();
+    }
+
+
     @RequestMapping(value = "/addRepairGroup", method = {RequestMethod.POST})
     public RestResponse<Void> addRepairGroup(
             Long repairTypeId,
@@ -525,6 +543,15 @@ public class AdminController extends BaseController {
         repairGroup.setSupervisorUserId(userId);
         repairGroupMapper.insert(repairGroup);
 
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/delRepairGroupForUser", method = {RequestMethod.POST})
+    public RestResponse<Void> delRepairGroupForUser(
+            Long repairTypeId,
+            String userId
+    ) {
+        repairGroupMapper.delRepairGroupForUser(repairTypeId, userId);
         return RestResponse.getSuccesseResponse();
     }
 
@@ -545,6 +572,14 @@ public class AdminController extends BaseController {
 
         repairManGroupMapper.insert(repairManGroup);
 
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/delRepairManGroup", method = {RequestMethod.POST})
+    public RestResponse<Void> delRepairManGroup(
+            Long id
+    ) {
+        repairManGroupMapper.delRepairManGroup(id);
         return RestResponse.getSuccesseResponse();
     }
 }
