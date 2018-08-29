@@ -1,8 +1,12 @@
 package com.admin.ac.ding.utils;
 
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class MyDateUtils {
     public static Boolean isSameMonth(Date date1, Date date2) {
@@ -23,5 +27,20 @@ public class MyDateUtils {
         }
 
         return false;
+    }
+
+    public static List<String> getDateRange(LocalDate start, LocalDate end) {
+        DateTimeFormatter formatter =DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<String> ret = new ArrayList<>();
+        LocalDate tmp = start;
+        while(tmp.isBefore(end) || tmp.equals(end)) {
+            ret.add(tmp.format(formatter));
+            tmp = tmp.plusDays(1);
+        }
+        return ret;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getDateRange(LocalDate.parse("2018-08-19"), LocalDate.parse("2018-09-19")));
     }
 }

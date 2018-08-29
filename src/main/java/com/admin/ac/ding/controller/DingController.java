@@ -27,6 +27,7 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -100,6 +101,12 @@ public class DingController extends BaseController {
         // 检查指定会议室是否被其它人申请中
         // 插入记录
         meetingBook.setBookStatus(MeetingBookStatus.WAIT_APPROVE.name());
+        if (meetingBook.getPreArrange() == null) {
+            meetingBook.setPreArrange(Byte.valueOf("0"));
+        }
+
+        meetingBook.setConfirmRemind(Byte.valueOf("0"));
+        meetingBook.setPreArrangeRemind(Byte.valueOf("0"));
         meetingBookMapper.insert(meetingBook);
 
         // 通知相关人员
@@ -362,6 +369,25 @@ public class DingController extends BaseController {
         return RestResponse.getSuccesseResponse();
     }
 
+    @RequestMapping(value = "/queryMeetingRoomBookDetailByDateRange", method = {RequestMethod.GET})
+    public RestResponse<Map<String, List<MeetingRoomDetailVO>>> queryMeetingRoomBookDetailByDateRange(
+            String gmtStart,
+            String gmtEnd
+    ) {
+        Map<String, List<MeetingRoomDetailVO>> result = new TreeMap<>();
+        List<String> dateList = MyDateUtils.getDateRange(LocalDate.parse(gmtStart), LocalDate.parse(gmtEnd));
+        for (String s : dateList) {
+            RestResponse<List<MeetingRoomDetailVO>> response = queryMeetingRoomBookDetail(s);
+            if (response.getSuccessed()) {
+                result.put(s, response.getData());
+            } else {
+                result.put(s, new ArrayList<>());
+            }
+        }
+
+        return RestResponse.getSuccesseResponse(result);
+    }
+
     @RequestMapping(value = "/queryMeetingRoomBookDetailByDate", method = {RequestMethod.GET})
     public RestResponse<List<MeetingRoomDetailVO>> queryMeetingRoomBookDetail(
             String date
@@ -377,7 +403,7 @@ public class DingController extends BaseController {
         Example example4 = new Example(MeetingBook.class);
         Example.Criteria criteria4 = example4.createCriteria();
         criteria4.andEqualTo("isDeleted", false);
-        criteria4.andGreaterThanOrEqualTo("bookDay", date);
+        criteria4.andEqualTo("bookDay", date);
         criteria4.andIn("bookStatus", Arrays.asList(MeetingBookStatus.AGREE.name(), MeetingBookStatus.WAIT_APPROVE.name()));
 
         List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
@@ -684,7 +710,7 @@ public class DingController extends BaseController {
         }
 
         if (StringUtils.isNotBlank(gmtEnd)) {
-            Date d = DateUtils.parseDate(gmtEnd + " 23:59:59", "yyyy-MM-dd hh:mm:ss");
+            Date d = DateUtils.parseDate(gmtEnd + " 23:59:59", "yyyy-MM-dd HH:mm:ss");
             repairApplyList = repairApplyList.stream().filter(x -> x.getGmtCreate().before(d)).collect(Collectors.toList());
         }
 
@@ -799,7 +825,7 @@ public class DingController extends BaseController {
         Example.Criteria criteria4 = example4.createCriteria();
         criteria4.andEqualTo("isDeleted", false);
         Date d1 = DateUtils.parseDate(gmtStart, "yyyy-MM-dd");
-        Date d2 = DateUtils.parseDate(gmtEnd + " 23:59:59", "yyyy-MM-dd hh:mm:ss");
+        Date d2 = DateUtils.parseDate(gmtEnd + " 23:59:59", "yyyy-MM-dd HH:mm:ss");
         criteria4.andBetween("gmtCreate", d1, d2);
 
         List<RepairApply> repairApplyList = repairApplyMapper.selectByExample(example4);

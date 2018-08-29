@@ -90,21 +90,21 @@
             <!--<ignoreColumn column="gmt_modify" />-->
         <!--</table>-->
 
-        <!--<table tableName="meeting_book">-->
-            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
-            <!--<ignoreColumn column="id" />-->
-            <!--<ignoreColumn column="is_deleted" />-->
-            <!--<ignoreColumn column="gmt_create" />-->
-            <!--<ignoreColumn column="gmt_modify" />-->
-        <!--</table>-->
-
-        <table tableName="repair_apply">
+        <table tableName="meeting_book">
             <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
             <ignoreColumn column="id" />
             <ignoreColumn column="is_deleted" />
             <ignoreColumn column="gmt_create" />
             <ignoreColumn column="gmt_modify" />
         </table>
+
+        <!--<table tableName="repair_apply">-->
+            <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+            <!--<ignoreColumn column="id" />-->
+            <!--<ignoreColumn column="is_deleted" />-->
+            <!--<ignoreColumn column="gmt_create" />-->
+            <!--<ignoreColumn column="gmt_modify" />-->
+        <!--</table>-->
 
         <!--<table tableName="repair_group">-->
             <!--<generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
