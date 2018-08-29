@@ -2,6 +2,7 @@ package com.admin.ac.ding.schedule;
 
 import com.admin.ac.ding.controller.AdminController;
 import com.admin.ac.ding.enums.MeetingBookStatus;
+import com.admin.ac.ding.enums.MeetingSlot;
 import com.admin.ac.ding.enums.RepairStatus;
 import com.admin.ac.ding.enums.SystemRoleType;
 import com.admin.ac.ding.exception.DingServiceException;
@@ -9,6 +10,7 @@ import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
 import com.admin.ac.ding.service.DingService;
 import com.taobao.api.ApiException;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,9 @@ public class ScheduledTask {
 
     @Autowired
     MeetingMediaInChargeMapper meetingMediaInChargeMapper;
+
+    @Autowired
+    MeetingRoomDetailMapper meetingRoomDetailMapper;
 
     @Value("${ding.app.repair.url")
     String repairListUrl;
@@ -174,16 +179,28 @@ public class ScheduledTask {
 
             notificationUsers.add(book.getBookUserId());
 
-            dingService.sendNotificationToUser(
-                    new ArrayList<>(notificationUsers),
-                    "会议室预约申请审核催促通知",
-                    String.format("会议室预约申请(申请单号为%d)尚未审核，请前往处理", book.getId()),
-                    meetingBookUrl
-            );
+            MeetingRoomDetail meetingRoomDetail = meetingRoomDetailMapper.selectByPrimaryKey(book.getMeetingRoomId());
+            if (meetingRoomDetail != null) {
+                dingService.sendNotificationToUser(
+                        new ArrayList<>(notificationUsers),
+                        "会议室提前布置通知",
+                        String.format(
+                                "已预约的%s%s的会议室:%s(申请单号为%d)需要提前布置，请前往处理",
+                                DateFormatUtils.format(
+                                        book.getBookDay(),
+                                        "yyyy-MM-dd"
+                                ),
+                                MeetingSlot.valueOf(book.getBookTime()).getDisplayName(),
+                                meetingRoomDetail.getName(),
+                                book.getId()
+                        ),
+                        meetingBookUrl
+                );
 
-            book.setPreArrangeRemind(Byte.valueOf("1"));
-            book.setGmtPreArrangeRemind(new Date());
-            meetingBookMapper.updateByPrimaryKey(book);
+                book.setPreArrangeRemind(Byte.valueOf("1"));
+                book.setGmtPreArrangeRemind(new Date());
+                meetingBookMapper.updateByPrimaryKey(book);
+            }
         }
     }
 }
