@@ -653,14 +653,18 @@ public class DingController extends BaseController {
         if (StringUtils.isNotBlank(srcType)) {
             param.setSrcType(srcType);
         }
-        if (StringUtils.isNotBlank(repairStatus)) {
-            param.setRepairStatus(repairStatus);
-        }
         if (repairManId != null) {
             param.setRepairProcUserId(repairManId);
         }
         List<RepairApply> repairApplyList = repairApplyMapper.select(param);
 
+        // 支持多状态筛选
+        if (StringUtils.isNotBlank(repairStatus)) {
+            Set<String> repairStatusSet = Stream.of(repairStatus.split(",", -1)).collect(Collectors.toSet());
+            repairApplyList = repairApplyList.stream().filter(x -> repairStatusSet.contains(x.getRepairStatus())).collect(Collectors.toList());
+        }
+
+        // 支持多评分筛选
         if (StringUtils.isNotBlank(scoreList)) {
             Set<Integer> scoreSet = Stream.of(scoreList.split(",", -1)).map(x -> Integer.valueOf(x)).collect(Collectors.toSet());
             repairApplyList = repairApplyList.stream().filter(x -> {
@@ -760,7 +764,7 @@ public class DingController extends BaseController {
                 if (total <= 0) {
                     jsonObject.put("goodTotalRate", "0.0%");
                 } else {
-                    jsonObject.put("goodTotalRate", String.format("%.1f%%", (double)goodTotal / total));
+                    jsonObject.put("goodTotalRate", String.format("%.1f%%", (double)goodTotal / total * 100));
                 }
 
                 // 统计本月
@@ -773,7 +777,7 @@ public class DingController extends BaseController {
                 if (totalMonth <= 0) {
                     jsonObject.put("goodTotalMonthRate", "0.0%");
                 } else {
-                    jsonObject.put("goodTotalMonthRate", String.format("%.2f%%", (double)goodTotalMonth / totalMonth));
+                    jsonObject.put("goodTotalMonthRate", String.format("%.2f%%", (double)goodTotalMonth / totalMonth * 100));
                 }
 
 
@@ -783,4 +787,89 @@ public class DingController extends BaseController {
 
         return RestResponse.getSuccesseResponse(result);
     }
+
+    @RequestMapping(value = "/queryScoreStats", method = {RequestMethod.GET})
+    public RestResponse<List<JSONObject>> queryScoreStats(
+            String gmtStart,
+            String gmtEnd,
+            @RequestParam(value = "repairTypeId", required = false) Long repairTypeId
+    ) throws ParseException {
+        Example example4 = new Example(RepairApply.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        Date d1 = DateUtils.parseDate(gmtStart, "yyyy-MM-dd");
+        Date d2 = DateUtils.parseDate(gmtEnd + " 23:59:59", "yyyy-MM-dd hh:mm:ss");
+        criteria4.andBetween("gmtCreate", d1, d2);
+
+        List<RepairApply> repairApplyList = repairApplyMapper.selectByExample(example4);
+        // 指定了大类就筛选大类
+        if (repairTypeId != null && repairTypeId > 0) {
+            repairApplyList = repairApplyList.stream().filter(x -> x.getRepairType().equals(repairTypeId)).collect(Collectors.toList());
+        }
+
+        Map<Long, List<RepairApply>> repairApplyMap = repairApplyList.stream()
+                .collect(Collectors.groupingBy(RepairApply::getRepairType));
+
+        Map<Long, RepairType> repairTypeMap = repairTypeMapper.select(new RepairType())
+                .stream().collect(Collectors.toMap(RepairType::getId, Function.identity()));
+
+        List<JSONObject> result = new ArrayList<>();
+        Long sumTotal = 0L;
+        Long sumComplete = 0L;
+        Long sumComplain = 0L;
+        // 统计每个大类的数据
+        for (Map.Entry<Long, RepairType> longRepairTypeEntry : repairTypeMap.entrySet()) {
+            Long rTypeId = longRepairTypeEntry.getKey();
+            List<RepairApply> repairApplyListForThisType = repairApplyMap.containsKey(rTypeId) ?
+                    repairApplyMap.get(rTypeId) : new ArrayList<>();
+            JSONObject jsonObject = new JSONObject();
+
+            if (repairTypeMap.containsKey(rTypeId)) {
+                jsonObject.put("typeName", repairTypeMap.get(rTypeId).getRepairType());
+                jsonObject.put("repairTypeId", rTypeId);
+            } else {
+                jsonObject.put("typeName", "未知类别");
+                jsonObject.put("repairTypeId", 0);
+            }
+            Long total = Long.valueOf(repairApplyListForThisType.size());
+            Long complete = repairApplyListForThisType.stream().filter(
+                    x -> RepairStatus.REPAIR_COMPLETE.name().equals(x.getRepairStatus()) || RepairStatus.ORDER_COMPLETE.name().equals(x.getRepairStatus())
+            ).count();
+            Long complain = repairApplyListForThisType.stream().filter(
+                    x -> x.getScore() != null && x.getScore() < 3
+            ).count();
+
+            jsonObject.put("total", total);
+            if (total <= 0) {
+                jsonObject.put("completeRate", "0.0%");
+                jsonObject.put("complainRate", "0.0%");
+            } else {
+                jsonObject.put("completeRate", String.format("%.1f%%", (double)complete / total * 100));
+                jsonObject.put("complainRate", String.format("%.1f%%", (double)complain / total * 100));
+            }
+
+            result.add(jsonObject);
+
+            sumTotal += total;
+            sumComplete += complete;
+            sumComplain += complain;
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("typeName", "合计");
+        jsonObject.put("repairTypeId", 0);
+        jsonObject.put("total", sumTotal);
+        if (sumTotal <= 0) {
+            jsonObject.put("completeRate", "0.0%");
+            jsonObject.put("complainRate", "0.0%");
+        } else {
+            jsonObject.put("completeRate", String.format("%.1f%%", (double)sumComplete / sumTotal * 100));
+            jsonObject.put("complainRate", String.format("%.1f%%", (double)sumComplain / sumTotal * 100));
+        }
+
+        result.add(0, jsonObject);
+
+        return RestResponse.getSuccesseResponse(result);
+    }
+
 }

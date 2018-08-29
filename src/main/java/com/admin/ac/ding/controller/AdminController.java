@@ -453,6 +453,11 @@ public class AdminController extends BaseController {
         List<MeetingMediaInCharge> meetingMediaInChargeList =  meetingMediaInChargeMapper.selectByExample(example4);
 
         jsonObject.put("meeingMediaInCharge", meetingMediaInChargeList.stream().map(x -> x.getMeetingRoomId()).collect(Collectors.toSet()));
+
+        RepairGroup repairGroup = new RepairGroup();
+        repairGroup.setSupervisorUserId(userId);
+        jsonObject.put("repairGroup", repairGroupMapper.select(repairGroup).stream().map(x -> x.getRepairType()).collect(Collectors.toSet()));
+
         return RestResponse.getSuccesseResponse(jsonObject);
     }
 
