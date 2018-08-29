@@ -401,6 +401,7 @@ public class DingController extends BaseController {
             @RequestBody RepairApply repairApply
     ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
         repairApply.setRepairStatus(RepairStatus.WAIT_CONFIRM.name());
+        repairApply.setRemindDispatch(Byte.valueOf("0"));
         repairApplyMapper.insert(repairApply);
 
         // 通知维修组长确认
