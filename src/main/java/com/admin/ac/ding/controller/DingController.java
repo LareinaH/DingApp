@@ -373,22 +373,56 @@ public class DingController extends BaseController {
     }
 
     @RequestMapping(value = "/queryMeetingRoomBookDetailByDateRange", method = {RequestMethod.GET})
-    public RestResponse<Map<String, List<MeetingRoomDetailVO>>> queryMeetingRoomBookDetailByDateRange(
+    public RestResponse<JSONObject> queryMeetingRoomBookDetailByDateRange(
             String gmtStart,
             String gmtEnd
     ) {
-        Map<String, List<MeetingRoomDetailVO>> result = new TreeMap<>();
-        List<String> dateList = MyDateUtils.getDateRange(LocalDate.parse(gmtStart), LocalDate.parse(gmtEnd));
-        for (String s : dateList) {
-            RestResponse<List<MeetingRoomDetailVO>> response = queryMeetingRoomBookDetail(s);
-            if (response.getSuccessed()) {
-                result.put(s, response.getData());
-            } else {
-                result.put(s, new ArrayList<>());
-            }
+        Example example4 = new Example(MeetingBook.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        criteria4.andBetween("bookDay", gmtStart + " 00:00:00", gmtEnd + " 23:59:59");
+        criteria4.andEqualTo("bookStatus", MeetingBookStatus.AGREE.name());
+
+        List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
+
+        final Map<Long, MeetingRoomDetailVO> meetingRoomDetailMap;
+        RestResponse<List<MeetingRoomDetailVO>> resp = adminController.getMeetingRoomList();
+        if (resp.getSuccessed()) {
+            meetingRoomDetailMap = resp.getData().stream()
+                    .collect(Collectors.toMap(MeetingRoomDetailVO::getId, Function.identity()));
+        } else {
+            return RestResponse.getFailedResponse(Constants.RcError, "未能查询到会议室详情列表");
         }
 
-        return RestResponse.getSuccesseResponse(result);
+        Map<Date, List<MeetingBook>> dateMap =
+                meetingBookList.stream().collect(Collectors.groupingBy(MeetingBook::getBookDay));
+
+        JSONObject resultJo = new JSONObject();
+        dateMap.entrySet().stream().forEach(x -> {
+            String date = DateFormatUtils.format(x.getKey(), "yyyy-MM-dd");
+
+            resultJo.put(
+                    date,
+                    x.getValue().stream().map(y -> {
+                        MeetingBookVO meetingBookVO = new MeetingBookVO();
+                        BeanUtils.copyProperties(y, meetingBookVO);
+                        if (meetingRoomDetailMap.containsKey(meetingBookVO.getMeetingRoomId())) {
+                            meetingBookVO.setMeetingRoomDetail(meetingRoomDetailMap.get(meetingBookVO.getMeetingRoomId()));
+                        }
+
+                        try {
+                            OapiUserGetWithDeptResponse oapiUserGetResponse = cacheService.getUserDetail(y.getBookUserId());
+                            meetingBookVO.setBookUserDetail(oapiUserGetResponse);
+                        } catch (Exception e) {
+                            logger.error("getUserDetail failed", e);
+                        }
+
+                        return meetingBookVO;
+                    }).collect(Collectors.toList())
+            );
+        });
+
+        return RestResponse.getSuccesseResponse(resultJo);
     }
 
     @RequestMapping(value = "/queryMeetingRoomBookDetailByDate", method = {RequestMethod.GET})
