@@ -1,6 +1,5 @@
 package com.admin.ac.ding.inject.startup;
 
-import com.admin.ac.ding.enums.RepairSrcType;
 import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.*;
 import com.admin.ac.ding.model.*;
@@ -41,6 +40,9 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
     @Autowired
     RepairApplyMapper repairApplyMapper;
+
+    @Autowired
+    SuggestManageMapper suggestManageMapper;
 
     @Override
     public void run(String... strings) throws Exception {
@@ -113,6 +115,24 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
                 if (StringUtils.isNotBlank(x.getCompleteUserId())) {
                     cacheService.getUserDetail(x.getCompleteUserId());
+                }
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (ApiException e) {
+                e.printStackTrace();
+            } catch (DingServiceException e) {
+                e.printStackTrace();
+            }
+        });
+
+        suggestManageMapper.select(new SuggestManage()).forEach(x -> {
+            try {
+                if (StringUtils.isNotBlank(x.getUserId())) {
+                    cacheService.getUserDetail(x.getUserId());
+                }
+
+                if (StringUtils.isNotBlank(x.getProcessUserId())) {
+                    cacheService.getUserDetail(x.getProcessUserId());
                 }
             } catch (ExecutionException e) {
                 e.printStackTrace();

@@ -84,6 +84,9 @@ public class DingController extends BaseController {
     @Autowired
     RepairManGroupMapper repairManGroupMapper;
 
+    @Autowired
+    SuggestManageMapper suggestManageMapper;
+
     @Value("${ding.app.meetingbook.url}")
     String meetingBookUrl;
 
@@ -780,6 +783,7 @@ public class DingController extends BaseController {
             JSONObject jsonObject = new JSONObject();
             if (repairManGroupMap.containsKey(repairManId)) {
                 RepairManGroup rmg = repairManGroupMap.get(repairManId);
+                jsonObject.put("repairManId", repairManId);
                 jsonObject.put("name", rmg.getName());
                 jsonObject.put("phone", rmg.getPhone());
 
@@ -899,4 +903,151 @@ public class DingController extends BaseController {
         return RestResponse.getSuccesseResponse(result);
     }
 
+    @RequestMapping(value = "/suggestSubmit", method = {RequestMethod.POST})
+    public RestResponse<SuggestManage> suggestSubmit(
+            @RequestBody SuggestManage suggestManage
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
+        suggestManage.setStatus(SuggestProcessStatus.WAIT_TRANSFER.name());
+        suggestManageMapper.insert(suggestManage);
+
+        // 通知接线员处理
+        SysRole sysRole = new SysRole();
+        sysRole.setRole(SystemRoleType.CUSTOMER_SERVICE.name());
+        List<String> customerServiceList = sysRoleMapper.select(sysRole).stream()
+                .map(x -> x.getUserId()).collect(Collectors.toList());
+
+        if (customerServiceList.size() <= 0) {
+            logger.error("未配置接线员");
+            return RestResponse.getFailedResponse(Constants.RcError, "未配置接线员");
+        }
+
+        dingService.sendNotificationToUser(
+                customerServiceList,
+                "意见建议分派通知",
+                String.format(
+                        "有新的意见建议工单(单号为%d),请分派处理",
+                        suggestManage.getId()
+                ),
+                repairListUrl
+        );
+
+        return RestResponse.getSuccesseResponse(suggestManage);
+    }
+
+    @RequestMapping(value = "/getSuggestDetail", method = {RequestMethod.GET})
+    public RestResponse<SuggestManageVO> suggestSubmit(
+            Long id
+    ) throws ExecutionException, ApiException, DingServiceException {
+        SuggestManage suggestManage = suggestManageMapper.selectByPrimaryKey(id);
+        if (suggestManage == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到工单详情");
+        }
+
+        SuggestManageVO suggestManageVO = new SuggestManageVO();
+        BeanUtils.copyProperties(suggestManage, suggestManageVO);
+        suggestManageVO.setSubmitUserDetail(cacheService.getUserDetail(suggestManage.getUserId()));
+        if (StringUtils.isNotBlank(suggestManage.getProcessUserId())) {
+            suggestManageVO.setProcessUserDetail(cacheService.getUserDetail(suggestManage.getProcessUserId()));
+        }
+
+        return RestResponse.getSuccesseResponse(suggestManageVO);
+    }
+
+    @RequestMapping(value = "/querySuggestPageList", method = {RequestMethod.GET})
+    public RestResponse<List<SuggestManageVO>> suggestSubmit(
+            @RequestParam(value = "userId", required = false) String userId,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "pageNum") Integer pageNum,
+            @RequestParam(value = "pageSize") Integer pageSize
+    ) {
+        Example example4 = new Example(SuggestManage.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        if (StringUtils.isNotBlank(userId)) {
+            criteria4.andEqualTo("userId", false);
+        }
+
+        if (StringUtils.isNotBlank(status)) {
+            criteria4.andIn("status", Arrays.asList(status.split(",", -1)));
+        }
+
+        PageHelper.startPage(pageNum, pageSize);
+        PageHelper.orderBy("gmt_create DESC");
+        List<SuggestManage> suggestManageList = suggestManageMapper.selectByExample(example4);
+
+        List<SuggestManageVO> suggestManageVOList = suggestManageList.stream().map(x -> {
+            SuggestManageVO suggestManageVO = new SuggestManageVO();
+            BeanUtils.copyProperties(x, suggestManageVO);
+            try {
+                suggestManageVO.setSubmitUserDetail(cacheService.getUserDetail(x.getUserId()));
+                if (StringUtils.isNotBlank(x.getProcessUserId())) {
+                    suggestManageVO.setProcessUserDetail(cacheService.getUserDetail(x.getProcessUserId()));
+                }
+
+                return suggestManageVO;
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (ApiException e) {
+                e.printStackTrace();
+            } catch (DingServiceException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }).filter(x -> x != null).collect(Collectors.toList());
+
+        return RestResponse.getSuccesseResponse(suggestManageVOList);
+    }
+
+    @RequestMapping(value = "/transferSuggest", method = {RequestMethod.POST})
+    public RestResponse<Void> transferSuggest(
+            Long id,
+            String processUserId,
+            String relayComment
+    ) {
+        SuggestManage suggestManage = suggestManageMapper.selectByPrimaryKey(id);
+        if (suggestManage == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到工单详情");
+        }
+
+        if (!SuggestProcessStatus.WAIT_TRANSFER.name().equals(suggestManage.getStatus())) {
+            return RestResponse.getFailedResponse(Constants.RcError, String.format(
+                    "工单状态为:%s,不能分派",
+                    SuggestProcessStatus.WAIT_TRANSFER.getDisplayName()
+            ));
+        }
+
+        suggestManage.setProcessUserId(processUserId);
+        suggestManage.setRelayComment(relayComment);
+        suggestManage.setGmtProcess(new Date());
+        suggestManage.setStatus(SuggestProcessStatus.WAIT_REPLY.name());
+        suggestManageMapper.updateByPrimaryKey(suggestManage);
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/processSuggest", method = {RequestMethod.POST})
+    public RestResponse<Void> processSuggest(
+            Long id,
+            String processComment
+    ) {
+        SuggestManage suggestManage = suggestManageMapper.selectByPrimaryKey(id);
+        if (suggestManage == null) {
+            return RestResponse.getFailedResponse(Constants.RcError, "未查找到工单详情");
+        }
+
+        if (!SuggestProcessStatus.WAIT_REPLY.name().equals(suggestManage.getStatus())) {
+            return RestResponse.getFailedResponse(Constants.RcError, String.format(
+                    "工单状态为:%s,不能回复处理",
+                    SuggestProcessStatus.WAIT_REPLY.getDisplayName()
+            ));
+        }
+
+        suggestManage.setProcessComment(processComment);
+        suggestManage.setGmtProcess(new Date());
+        suggestManage.setStatus(SuggestProcessStatus.COMPLETE.name());
+        suggestManageMapper.updateByPrimaryKey(suggestManage);
+
+        return RestResponse.getSuccesseResponse();
+    }
 }
