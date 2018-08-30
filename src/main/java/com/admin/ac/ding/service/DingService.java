@@ -214,7 +214,7 @@ public class DingService {
 
     public String getNotificationUrl(String action, String target) {
         return String.format(
-                "http://47.97.212.25/DingApp/redirect.html?action=%s&target=%s",
+                "http://47.97.212.22/DingApp/redirect.html?action=%s&target=%s",
                 action, target
         );
     }
