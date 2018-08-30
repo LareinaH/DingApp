@@ -188,13 +188,28 @@ public class ScheduledTask {
             notificationUsers.addAll(meetingInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
             notificationUsers.addAll(meetingMediaInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
 
-            notificationUsers.add(book.getBookUserId());
-
             MeetingRoomDetail meetingRoomDetail = meetingRoomDetailMapper.selectByPrimaryKey(book.getMeetingRoomId());
             if (meetingRoomDetail != null) {
                 dingService.sendNotificationToUser(
                         meetingBookAppAgentId,
                         new ArrayList<>(notificationUsers),
+                        "会议室提前布置通知",
+                        String.format(
+                                "已预约的%s%s的会议室:%s(申请单号为%d)需要提前布置，请前往处理",
+                                DateFormatUtils.format(
+                                        book.getBookDay(),
+                                        "yyyy-MM-dd"
+                                ),
+                                MeetingSlot.valueOf(book.getBookTime()).getDisplayName(),
+                                meetingRoomDetail.getName(),
+                                book.getId()
+                        ),
+                        meetingBookUrl
+                );
+
+                dingService.sendNotificationToUser(
+                        meetingBookAppAgentId,
+                        Arrays.asList(book.getBookUserId()),
                         "会议室提前布置通知",
                         String.format(
                                 "已预约的%s%s的会议室:%s(申请单号为%d)需要提前布置，请前往处理",
