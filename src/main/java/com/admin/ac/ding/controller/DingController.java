@@ -1094,7 +1094,7 @@ public class DingController extends BaseController {
                         "有新的意见建议工单(单号为%d)待回复处理,请前往查看详情",
                         suggestManage.getId()
                 ),
-                dingService.getNotificationUrl("SUGGEST", "STAFF")
+                “http://47.97.212.22/DingApp/suggest/suggestShow.html?showmenu=false&id=” + suggestManage.getId()
         );
 
         return RestResponse.getSuccesseResponse();
