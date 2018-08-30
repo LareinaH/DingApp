@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -68,6 +69,9 @@ public class AdminController extends BaseController {
 
     @Autowired
     RepairManGroupMapper repairManGroupMapper;
+
+    @Value("${ding.app.meetingbook.agentid}")
+    Long meetingBookAppAgentId;
 
     @RequestMapping(value = "/getMeetingRoomList", method = {RequestMethod.GET})
     public RestResponse<List<MeetingRoomDetailVO>> getMeetingRoomList() {
@@ -470,6 +474,7 @@ public class AdminController extends BaseController {
         }
 
         dingService.sendNotificationToUser(
+                meetingBookAppAgentId,
                 Arrays.asList(userIds.split(",")),
                 "会议室预约审批通知",
                 "有一个新的会议室预约申请，请前往处理",
@@ -480,11 +485,12 @@ public class AdminController extends BaseController {
 
     @RequestMapping(value = "/querySendResultAll", method = {RequestMethod.GET})
     public RestResponse<JSONObject> querySendResultAll(
-            Long taskId
+            Long taskId,
+            Long agentId
     ) throws ExecutionException, ApiException, DingServiceException {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("progress", dingService.getSendProgress(taskId));
-        jsonObject.put("result", dingService.getSendResult(taskId));
+        jsonObject.put("progress", dingService.getSendProgress(taskId, agentId));
+        jsonObject.put("result", dingService.getSendResult(taskId, agentId));
 
         return RestResponse.getSuccesseResponse(jsonObject);
     }

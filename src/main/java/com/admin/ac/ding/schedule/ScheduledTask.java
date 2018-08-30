@@ -58,6 +58,15 @@ public class ScheduledTask {
     @Value("${ding.app.meetingbook.url}")
     String meetingBookUrl;
 
+    @Value("${ding.app.meetingbook.agentid}")
+    Long meetingBookAppAgentId;
+
+    @Value("${ding.app.repair.agentid}")
+    Long repairAppAgentId;
+
+    @Value("${ding.app.suggest.agentid}")
+    Long suggestAppAgentId;
+
     @Scheduled(cron = "0 */1 * * * ?" )
     public void repairDispatchRemind() throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
         RepairApply repairApply = new RepairApply();
@@ -87,6 +96,7 @@ public class ScheduledTask {
 
         for (RepairApply apply : repairApplyList) {
             dingService.sendNotificationToUser(
+                    repairAppAgentId,
                     customerServiceList,
                     "维修催促通知",
                     String.format(
@@ -130,6 +140,7 @@ public class ScheduledTask {
 
         for (MeetingBook book : meetingBookList) {
             dingService.sendNotificationToUser(
+                    meetingBookAppAgentId,
                     bookReviewers,
                     "会议室预约申请审核催促通知",
                     String.format("会议室预约申请(申请单号为%d)尚未审核，请前往处理", book.getId()),
@@ -182,6 +193,7 @@ public class ScheduledTask {
             MeetingRoomDetail meetingRoomDetail = meetingRoomDetailMapper.selectByPrimaryKey(book.getMeetingRoomId());
             if (meetingRoomDetail != null) {
                 dingService.sendNotificationToUser(
+                        meetingBookAppAgentId,
                         new ArrayList<>(notificationUsers),
                         "会议室提前布置通知",
                         String.format(

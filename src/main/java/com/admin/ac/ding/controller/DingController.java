@@ -27,7 +27,6 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -90,8 +89,17 @@ public class DingController extends BaseController {
     @Value("${ding.app.meetingbook.url}")
     String meetingBookUrl;
 
+    @Value("${ding.app.meetingbook.agentid}")
+    Long meetingBookAppAgentId;
+
     @Value("${ding.app.repair.url")
     String repairListUrl;
+
+    @Value("${ding.app.repair.agentid}")
+    Long repairAppAgentId;
+
+    @Value("${ding.app.suggest.agentid}")
+    Long suggestAppAgentId;
 
     @RequestMapping(value = "/meetingBookApply", method = {RequestMethod.POST})
     public RestResponse<Void> meetingBookApply(
@@ -135,6 +143,7 @@ public class DingController extends BaseController {
 
         try {
             dingService.sendNotificationToUser(
+                    meetingBookAppAgentId,
                     new ArrayList<>(notificationUsers),
                     "会议室预约申请通知",
                     String.format("有新的会议室预约申请(申请单号为%d)，请前往查看详情", meetingBook.getId()),
@@ -142,6 +151,7 @@ public class DingController extends BaseController {
             );
 
             dingService.sendNotificationToUser(
+                    meetingBookAppAgentId,
                     new ArrayList<>(bookReviewers),
                     "会议室预约审批通知",
                     String.format("你有一个新的会议室预约申请需要处理(申请单号为%d)，请前往查看详情", meetingBook.getId()),
@@ -314,6 +324,7 @@ public class DingController extends BaseController {
             MeetingRoomDetail meetingRoomDetail = meetingRoomDetailMapper.selectByPrimaryKey(meetingBook.getMeetingRoomId());
             if (meetingRoomDetail != null) {
                 dingService.sendNotificationToUser(
+                        meetingBookAppAgentId,
                         Arrays.asList(meetingBook.getBookUserId()),
                         "会议室预约结果通知",
                         String.format(
@@ -350,6 +361,7 @@ public class DingController extends BaseController {
             notificationUsers.addAll(meetingMediaInChargeList.stream().map(x -> x.getUserId()).collect(Collectors.toList()));
 
             dingService.sendNotificationToUser(
+                    meetingBookAppAgentId,
                     new ArrayList<>(notificationUsers),
                     "会议室预约操作通知",
                     String.format(
@@ -472,6 +484,7 @@ public class DingController extends BaseController {
         repairGroup.setRepairType(repairApply.getRepairType());
         List<RepairGroup> repairGroupList = repairGroupMapper.select(repairGroup);
         dingService.sendNotificationToUser(
+                repairAppAgentId,
                 repairGroupList.stream().map(x -> x.getSupervisorUserId()).collect(Collectors.toList()),
                 "维修确认通知",
                 String.format(
@@ -516,6 +529,7 @@ public class DingController extends BaseController {
         // 通知提交人维修完成
         if (repairSrcType.equals(RepairSrcType.USER)) {
             dingService.sendNotificationToUser(
+                    repairAppAgentId,
                     Arrays.asList(repairApply.getSubmitUserId()),
                     "维修派遣通知",
                     String.format(
@@ -527,6 +541,7 @@ public class DingController extends BaseController {
             );
         } else if (repairSrcType.equals(RepairSrcType.SERVICE)) {
             dingService.sendNotificationToUser(
+                    repairAppAgentId,
                     Arrays.asList(repairApply.getSubmitUserId()),
                     "维修派遣通知",
                     String.format(
@@ -565,6 +580,7 @@ public class DingController extends BaseController {
         // 通知提交人维修完成
         if (repairSrcType.equals(RepairSrcType.USER)) {
             dingService.sendNotificationToUser(
+                    repairAppAgentId,
                     Arrays.asList(repairApply.getSubmitUserId()),
                     "维修完成通知",
                     String.format(
@@ -575,6 +591,7 @@ public class DingController extends BaseController {
             );
         } else if (repairSrcType.equals(RepairSrcType.SERVICE)) {
             dingService.sendNotificationToUser(
+                    repairAppAgentId,
                     Arrays.asList(repairApply.getSubmitUserId()),
                     "维修完成通知",
                     String.format(
@@ -956,10 +973,11 @@ public class DingController extends BaseController {
         }
 
         dingService.sendNotificationToUser(
+                suggestAppAgentId,
                 customerServiceList,
-                "意见建议分派通知",
+                "意见建议待转交通知",
                 String.format(
-                        "有新的意见建议工单(单号为%d),请分派处理",
+                        "有新的意见建议工单(单号为%d),请转交处理",
                         suggestManage.getId()
                 ),
                 repairListUrl
@@ -988,7 +1006,7 @@ public class DingController extends BaseController {
     }
 
     @RequestMapping(value = "/querySuggestPageList", method = {RequestMethod.GET})
-    public RestResponse<List<SuggestManageVO>> suggestSubmit(
+    public RestResponse<List<SuggestManageVO>> querySuggestPageList(
             @RequestParam(value = "userId", required = false) String userId,
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "pageNum") Integer pageNum,
@@ -998,7 +1016,7 @@ public class DingController extends BaseController {
         Example.Criteria criteria4 = example4.createCriteria();
         criteria4.andEqualTo("isDeleted", false);
         if (StringUtils.isNotBlank(userId)) {
-            criteria4.andEqualTo("userId", false);
+            criteria4.andEqualTo("userId", userId);
         }
 
         if (StringUtils.isNotBlank(status)) {
@@ -1038,7 +1056,7 @@ public class DingController extends BaseController {
             Long id,
             String processUserId,
             String relayComment
-    ) {
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
         SuggestManage suggestManage = suggestManageMapper.selectByPrimaryKey(id);
         if (suggestManage == null) {
             return RestResponse.getFailedResponse(Constants.RcError, "未查找到工单详情");
@@ -1057,6 +1075,28 @@ public class DingController extends BaseController {
         suggestManage.setStatus(SuggestProcessStatus.WAIT_REPLY.name());
         suggestManageMapper.updateByPrimaryKey(suggestManage);
 
+        dingService.sendNotificationToUser(
+                suggestAppAgentId,
+                Arrays.asList(suggestManage.getUserId()),
+                "意见建议已转交通知",
+                String.format(
+                        "您提交的意见建议工单(单号为%d)已转交处理,请前往查看详情",
+                        suggestManage.getId()
+                ),
+                repairListUrl
+        );
+
+        dingService.sendNotificationToUser(
+                suggestAppAgentId,
+                Arrays.asList(suggestManage.getProcessUserId()),
+                "意见建议待处理通知",
+                String.format(
+                        "有新的意见建议工单(单号为%d)待回复处理,请前往查看详情",
+                        suggestManage.getId()
+                ),
+                repairListUrl
+        );
+
         return RestResponse.getSuccesseResponse();
     }
 
@@ -1064,7 +1104,7 @@ public class DingController extends BaseController {
     public RestResponse<Void> processSuggest(
             Long id,
             String processComment
-    ) {
+    ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
         SuggestManage suggestManage = suggestManageMapper.selectByPrimaryKey(id);
         if (suggestManage == null) {
             return RestResponse.getFailedResponse(Constants.RcError, "未查找到工单详情");
@@ -1081,6 +1121,17 @@ public class DingController extends BaseController {
         suggestManage.setGmtProcess(new Date());
         suggestManage.setStatus(SuggestProcessStatus.COMPLETE.name());
         suggestManageMapper.updateByPrimaryKey(suggestManage);
+
+        dingService.sendNotificationToUser(
+                suggestAppAgentId,
+                Arrays.asList(suggestManage.getUserId()),
+                "意见建议处理完毕通知",
+                String.format(
+                        "您提交的意见建议工单(单号为%d)已回复处理,请前往查看详情",
+                        suggestManage.getId()
+                ),
+                repairListUrl
+        );
 
         return RestResponse.getSuccesseResponse();
     }
