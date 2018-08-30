@@ -171,7 +171,16 @@ public class DingService {
         msg.getLink().setTitle(title);
         msg.getLink().setText(content);
         msg.getLink().setMessageUrl("dingtalk://dingtalkclient/page/link?pc_slide=true&url=" + URLEncoder.encode(url, "utf-8"));
-        msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+        if (title.startsWith("会议室")) {
+            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+        } else if (title.startsWith("维修")) {
+            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+        } else if (title.startsWith("意见建议")) {
+            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+        } else {
+            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+        }
+
 //        msg.getLink().setPicUrl("");
         request.setMsg(msg);
 
