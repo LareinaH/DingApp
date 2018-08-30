@@ -174,9 +174,9 @@ public class DingService {
         if (title.startsWith("会议室")) {
             msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
         } else if (title.startsWith("维修")) {
-            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5FUHhGbOACAAbs4AaQB5_6881401_2097262.png");
         } else if (title.startsWith("意见建议")) {
-            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
+            msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5FUJw__OACAAbs4AaQB5_6881401_2097262.png");
         } else {
             msg.getLink().setPicUrl("https://static.dingtalk.com/media/lALPBY0V5Esldu7OW6SLrs5PGgDY_1327104216_1537510318.png");
         }
@@ -210,5 +210,12 @@ public class DingService {
         checkResponse(response, "查询消息发送结果失败");
 
         return response;
+    }
+
+    public String getNotificationUrl(String action, String target) {
+        return String.format(
+                "http://47.97.212.25/DingApp/redirect.html?action=%s&target=%s",
+                action, target
+        );
     }
 }

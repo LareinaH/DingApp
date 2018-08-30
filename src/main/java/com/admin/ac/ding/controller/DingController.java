@@ -147,7 +147,7 @@ public class DingController extends BaseController {
                     new ArrayList<>(notificationUsers),
                     "会议室预约申请通知",
                     String.format("有新的会议室预约申请(申请单号为%d)，请前往查看详情", meetingBook.getId()),
-                    meetingBookUrl
+                    dingService.getNotificationUrl("BOARD_ROOM", "STAFF")
             );
 
             dingService.sendNotificationToUser(
@@ -155,7 +155,7 @@ public class DingController extends BaseController {
                     new ArrayList<>(bookReviewers),
                     "会议室预约审批通知",
                     String.format("你有一个新的会议室预约申请需要处理(申请单号为%d)，请前往查看详情", meetingBook.getId()),
-                    meetingBookUrl
+                    dingService.getNotificationUrl("BOARD_ROOM", "STAFF")
             );
         } catch (Exception e) {
             logger.error("send notification failed", e);
@@ -338,7 +338,7 @@ public class DingController extends BaseController {
                                 meetingBook.getId(),
                                 meetingBookStatus.getDisplayName()
                                 ),
-                        meetingBookUrl
+                        dingService.getNotificationUrl("BOARD_ROOM", "USER")
                 );
             } else {
                 logger.error("meeting room {} not exist", meetingBook.getMeetingRoomId());
@@ -375,7 +375,7 @@ public class DingController extends BaseController {
                             meetingBook.getId(),
                             meetingBookStatus.getDisplayName()
                     ),
-                    meetingBookUrl
+                    dingService.getNotificationUrl("BOARD_ROOM", "STAFF")
             );
         } catch (Exception e) {
             logger.error("send notification failed", e);
@@ -491,7 +491,7 @@ public class DingController extends BaseController {
                         "有新的维修工单(申请单号为%d),请前往处理",
                         repairApply.getId()
                 ),
-                repairListUrl
+                dingService.getNotificationUrl("FIX", "STAFF")
         );
 
         return RestResponse.getSuccesseResponse();
@@ -537,7 +537,7 @@ public class DingController extends BaseController {
                             repairApply.getId(),
                             repairManGroup.getName()
                     ),
-                    repairListUrl
+                    dingService.getNotificationUrl("FIX", "USER")
             );
         } else if (repairSrcType.equals(RepairSrcType.SERVICE)) {
             dingService.sendNotificationToUser(
@@ -550,7 +550,7 @@ public class DingController extends BaseController {
                             repairApply.getRealUserName(),
                             repairApply.getRealUserPhone()
                     ),
-                    repairListUrl
+                    dingService.getNotificationUrl("FIX", "STAFF")
             );
         }
 
@@ -587,7 +587,7 @@ public class DingController extends BaseController {
                             "您提交的维修工单(申请单号为%d)已维修完毕,请对本次服务提出评价",
                             repairApply.getId()
                     ),
-                    repairListUrl
+                    dingService.getNotificationUrl("FIX", "USER")
             );
         } else if (repairSrcType.equals(RepairSrcType.SERVICE)) {
             dingService.sendNotificationToUser(
@@ -600,7 +600,7 @@ public class DingController extends BaseController {
                             repairApply.getRealUserName(),
                             repairApply.getRealUserPhone()
                     ),
-                    repairListUrl
+                    dingService.getNotificationUrl("FIX", "STAFF")
             );
         }
 
@@ -980,7 +980,7 @@ public class DingController extends BaseController {
                         "有新的意见建议工单(单号为%d),请转交处理",
                         suggestManage.getId()
                 ),
-                repairListUrl
+                dingService.getNotificationUrl("SUGGEST", "STAFF")
         );
 
         return RestResponse.getSuccesseResponse(suggestManage);
@@ -1083,7 +1083,7 @@ public class DingController extends BaseController {
                         "您提交的意见建议工单(单号为%d)已转交处理,请前往查看详情",
                         suggestManage.getId()
                 ),
-                repairListUrl
+                dingService.getNotificationUrl("SUGGEST", "USER")
         );
 
         dingService.sendNotificationToUser(
@@ -1094,7 +1094,7 @@ public class DingController extends BaseController {
                         "有新的意见建议工单(单号为%d)待回复处理,请前往查看详情",
                         suggestManage.getId()
                 ),
-                repairListUrl
+                dingService.getNotificationUrl("SUGGEST", "STAFF")
         );
 
         return RestResponse.getSuccesseResponse();
@@ -1130,7 +1130,7 @@ public class DingController extends BaseController {
                         "您提交的意见建议工单(单号为%d)已回复处理,请前往查看详情",
                         suggestManage.getId()
                 ),
-                repairListUrl
+                dingService.getNotificationUrl("SUGGEST", "USER")
         );
 
         return RestResponse.getSuccesseResponse();

@@ -103,7 +103,7 @@ public class ScheduledTask {
                             "维修工单(申请单号为%d)尚未确认,请催促维修组长处理",
                             apply.getId()
                     ),
-                    repairListUrl
+                    dingService.getNotificationUrl("FIX", "STAFF")
             );
 
             apply.setRemindDispatch(Byte.valueOf("1"));
@@ -144,7 +144,7 @@ public class ScheduledTask {
                     bookReviewers,
                     "会议室预约申请审核催促通知",
                     String.format("会议室预约申请(申请单号为%d)尚未审核，请前往处理", book.getId()),
-                    meetingBookUrl
+                    dingService.getNotificationUrl("BOARD_ROOM", "STAFF")
             );
 
             book.setConfirmRemind(Byte.valueOf("1"));
@@ -204,7 +204,7 @@ public class ScheduledTask {
                                 meetingRoomDetail.getName(),
                                 book.getId()
                         ),
-                        meetingBookUrl
+                        dingService.getNotificationUrl("BOARD_ROOM", "STAFF")
                 );
 
                 dingService.sendNotificationToUser(
@@ -221,7 +221,7 @@ public class ScheduledTask {
                                 meetingRoomDetail.getName(),
                                 book.getId()
                         ),
-                        meetingBookUrl
+                        dingService.getNotificationUrl("BOARD_ROOM", "USER")
                 );
 
                 book.setPreArrangeRemind(Byte.valueOf("1"));
