@@ -958,7 +958,7 @@ public class DingController extends BaseController {
     public RestResponse<SuggestManage> suggestSubmit(
             @RequestBody SuggestManage suggestManage
     ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
-        suggestManage.setStatus(SuggestProcessStatus.WAIT_TRANSFER.name());
+        suggestManage.setStatus(SuggestProcessStatus.WAIT_REPLY.name());
         suggestManageMapper.insert(suggestManage);
 
         // 通知接线员处理
@@ -975,9 +975,9 @@ public class DingController extends BaseController {
         dingService.sendNotificationToUser(
                 suggestAppAgentId,
                 customerServiceList,
-                "意见建议待转交通知",
+                "意见建议处理通知",
                 String.format(
-                        "有新的意见建议工单(单号为%d),请转交处理",
+                        "有新的意见建议工单(单号为%d),请处理回复",
                         suggestManage.getId()
                 ),
                 dingService.getNotificationUrl("SUGGEST", "STAFF")
@@ -1134,5 +1134,41 @@ public class DingController extends BaseController {
         );
 
         return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/querySuggestByDateRange", method = {RequestMethod.GET})
+    public RestResponse<List<SuggestManageVO>> querySuggestByDateRange(
+            String gmtStart,
+            String gmtEnd
+    ) {
+        Example example4 = new Example(SuggestManage.class);
+        Example.Criteria criteria4 = example4.createCriteria();
+        criteria4.andEqualTo("isDeleted", false);
+        criteria4.andBetween("gmtCreate", gmtStart, gmtEnd);
+
+        List<SuggestManage> suggestManageList = suggestManageMapper.selectByExample(example4);
+
+        List<SuggestManageVO> suggestManageVOList = suggestManageList.stream().map(x -> {
+            SuggestManageVO suggestManageVO = new SuggestManageVO();
+            BeanUtils.copyProperties(x, suggestManageVO);
+            try {
+                suggestManageVO.setSubmitUserDetail(cacheService.getUserDetail(x.getUserId()));
+                if (StringUtils.isNotBlank(x.getProcessUserId())) {
+                    suggestManageVO.setProcessUserDetail(cacheService.getUserDetail(x.getProcessUserId()));
+                }
+
+                return suggestManageVO;
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (ApiException e) {
+                e.printStackTrace();
+            } catch (DingServiceException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }).filter(x -> x != null).collect(Collectors.toList());
+
+        return RestResponse.getSuccesseResponse(suggestManageVOList);
     }
 }
