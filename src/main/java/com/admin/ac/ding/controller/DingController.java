@@ -393,7 +393,7 @@ public class DingController extends BaseController {
         Example.Criteria criteria4 = example4.createCriteria();
         criteria4.andEqualTo("isDeleted", false);
         criteria4.andBetween("bookDay", gmtStart + " 00:00:00", gmtEnd + " 23:59:59");
-        criteria4.andEqualTo("bookStatus", MeetingBookStatus.AGREE.name());
+        criteria4.andIn("bookStatus", Arrays.asList(MeetingBookStatus.AGREE.name(), MeetingBookStatus.WAIT_APPROVE.name()));
 
         List<MeetingBook> meetingBookList = meetingBookMapper.selectByExample(example4);
 
@@ -828,16 +828,15 @@ public class DingController extends BaseController {
         Map<Long, RepairManGroup> repairManGroupMap = repairManGroupList.stream().collect(Collectors.toMap(RepairManGroup::getId, Function.identity()));
 
         List<JSONObject> result = new ArrayList<>();
-        for (Map.Entry<Long, List<RepairApply>> longListEntry : repairApplyMap.entrySet()) {
-            Long repairManId = longListEntry.getKey();
-            List<RepairApply> repairListForMan = longListEntry.getValue();
+        for (Map.Entry<Long, RepairManGroup> longRepairManGroupEntry : repairManGroupMap.entrySet()) {
+            Long repairManId = longRepairManGroupEntry.getKey();
+            RepairManGroup rmg = longRepairManGroupEntry.getValue();
             JSONObject jsonObject = new JSONObject();
-            if (repairManGroupMap.containsKey(repairManId)) {
-                RepairManGroup rmg = repairManGroupMap.get(repairManId);
-                jsonObject.put("repairManId", repairManId);
-                jsonObject.put("name", rmg.getName());
-                jsonObject.put("phone", rmg.getPhone());
-
+            jsonObject.put("repairManId", repairManId);
+            jsonObject.put("name", rmg.getName());
+            jsonObject.put("phone", rmg.getPhone());
+            if (repairApplyMap.containsKey(repairManId)) {
+                List<RepairApply> repairListForMan = repairApplyMap.get(repairManId);
                 // 统计历史总数
                 long total = repairListForMan.size();
                 long goodTotal = repairListForMan.stream().filter(x -> x.getScore() >= 5 || x.getScore() == null).count();
@@ -861,8 +860,14 @@ public class DingController extends BaseController {
                 } else {
                     jsonObject.put("goodTotalMonthRate", String.format("%.2f%%", (double)goodTotalMonth / totalMonth * 100));
                 }
-
-
+            } else {
+                // 没有任何维修记录
+                jsonObject.put("total", 0L);
+                jsonObject.put("goodTotal", 0L);
+                jsonObject.put("goodTotalRate", "0.0%");
+                jsonObject.put("totalMonth", 0L);
+                jsonObject.put("goodTotalMonth", 0L);
+                jsonObject.put("goodTotalMonthRate", "0.0%");
                 result.add(jsonObject);
             }
         }

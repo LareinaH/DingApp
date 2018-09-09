@@ -31,13 +31,7 @@ public class ExportSuggestView extends ExcelView {
         header.getCell(cellIndex++).setCellStyle(super.cellStyle);
         header.createCell(cellIndex).setCellValue("意见描述");
         header.getCell(cellIndex++).setCellStyle(super.cellStyle);
-        header.createCell(cellIndex).setCellValue("处理人");
-        header.getCell(cellIndex++).setCellStyle(super.cellStyle);
-        header.createCell(cellIndex).setCellValue("处理时间");
-        header.getCell(cellIndex++).setCellStyle(super.cellStyle);
-        header.createCell(cellIndex).setCellValue("处理备注");
-        header.getCell(cellIndex++).setCellStyle(super.cellStyle);
-        header.createCell(cellIndex).setCellValue("当前状态");
+        header.createCell(cellIndex).setCellValue("线上回复");
         header.getCell(cellIndex++).setCellStyle(super.cellStyle);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -52,19 +46,7 @@ public class ExportSuggestView extends ExcelView {
             row.createCell(ci++).setCellValue(x.getSubmitUserDetail().getDeptInfoList().stream().map(y -> y.getName()).collect(Collectors.joining(",")));
             row.createCell(ci++).setCellValue(sdf.format(x.getGmtCreate()));
             row.createCell(ci++).setCellValue(x.getSuggest());
-            if (x.getProcessUserDetail() != null) {
-                row.createCell(ci++).setCellValue(x.getProcessUserDetail().getName());
-            } else {
-                row.createCell(ci++).setCellValue("-");
-            }
-
-            if (x.getGmtProcess() != null) {
-                row.createCell(ci++).setCellValue(sdf.format(x.getGmtProcess()));
-            } else {
-                row.createCell(ci++).setCellValue("-");
-            }
             row.createCell(ci++).setCellValue(x.getProcessComment());
-            row.createCell(ci++).setCellValue(SuggestProcessStatus.valueOf(x.getStatus()).getDisplayName());
         });
     }
 
