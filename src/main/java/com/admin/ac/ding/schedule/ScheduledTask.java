@@ -1,6 +1,7 @@
 package com.admin.ac.ding.schedule;
 
 import com.admin.ac.ding.controller.AdminController;
+import com.admin.ac.ding.controller.DingController;
 import com.admin.ac.ding.enums.MeetingBookStatus;
 import com.admin.ac.ding.enums.MeetingSlot;
 import com.admin.ac.ding.enums.RepairStatus;
@@ -51,6 +52,9 @@ public class ScheduledTask {
 
     @Autowired
     MeetingRoomDetailMapper meetingRoomDetailMapper;
+
+    @Autowired
+    DingController dingController;
 
     @Value("${ding.app.repair.url")
     String repairListUrl;
@@ -227,6 +231,35 @@ public class ScheduledTask {
                 book.setPreArrangeRemind(Byte.valueOf("1"));
                 book.setGmtPreArrangeRemind(new Date());
                 meetingBookMapper.updateByPrimaryKey(book);
+            }
+        }
+    }
+
+    @Scheduled(cron = "44 */5 * * * ?" )
+    public void autoScoreRepairOrder() {
+        RepairApply p = new RepairApply();
+        p.setRepairStatus(RepairStatus.REPAIR_COMPLETE.name());
+        List<RepairApply> repairApplyList = repairApplyMapper.select(p);
+        Long now = System.currentTimeMillis() / 1000;
+        for (RepairApply repairApply : repairApplyList) {
+            if (repairApply.getGmtRepairComplete() == null) {
+                logger.warn("repair apply {} status is {} but gmt is null", repairApply.getId(), repairApply.getRepairStatus());
+                continue;
+            }
+            // 判断当前时间与维修时间的差值
+            Long secs = now - repairApply.getGmtRepairComplete().getTime() / 1000;
+            if (secs < 0) {
+                continue;
+            }
+
+            // 维修后72小时自动好评
+            if (secs > 3600 * 24 * 3) {
+                RestResponse<Void> response = dingController.scoreRepairOrder(repairApply.getId(), 5, "维修完成3天后系统默认好评");
+                if (response.getSuccessed()) {
+                    logger.info("repair apply {} auto score success", repairApply.getId());
+                } else {
+                    logger.error("repair apply {} auto score failed for: {}", repairApply.getId(), response.getMessage());
+                }
             }
         }
     }
