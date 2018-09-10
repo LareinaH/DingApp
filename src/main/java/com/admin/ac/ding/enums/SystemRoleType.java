@@ -11,6 +11,7 @@ public enum SystemRoleType {
     CUSTOMER_SERVICE("接线员"),
     PRIVILEGED_PERSON("特权人"),
     SYS_ADMIN("系统管理员"),
+    MEETING_USER("会议室预订联系人"),
     MEETING_BOOK_REVIEW("会议室申请审核员");
 
     private String displayName;
