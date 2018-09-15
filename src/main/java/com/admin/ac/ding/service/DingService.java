@@ -3,6 +3,7 @@ package com.admin.ac.ding.service;
 import com.admin.ac.ding.exception.DingServiceException;
 import com.admin.ac.ding.mapper.DingNotifyFilterMapper;
 import com.admin.ac.ding.model.DingNotifyFilter;
+import com.alibaba.fastjson.JSON;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.DingTalkResponse;
@@ -21,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -165,6 +167,7 @@ public class DingService {
             String content,
             String url
     ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
+        List<String> userIdListCopy = new ArrayList<>(userIdList);
         logger.info("plan to send notify for {} users", userIdList.size());
         List<String> excludeUsers = dingNotifyFilterMapper.select(new DingNotifyFilter())
                 .stream().map(x -> x.getUserId()).collect(Collectors.toList());
@@ -172,8 +175,8 @@ public class DingService {
         userIdList.removeAll(excludeUsers);
         logger.info("actual to send notify for {} users", userIdList.size());
 
-        excludeUsers.retainAll(userIdList);
-        logger.info("{} users are in filter list", excludeUsers.size());
+        excludeUsers.retainAll(userIdListCopy);
+        logger.info("{} users {} are in filter list", excludeUsers.size(), JSON.toJSONString(excludeUsers));
 
         if (CollectionUtils.isEmpty(userIdList)) {
             logger.info("send notify user list is none and return");
