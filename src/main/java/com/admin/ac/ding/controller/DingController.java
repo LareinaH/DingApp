@@ -86,6 +86,9 @@ public class DingController extends BaseController {
     @Autowired
     SuggestManageMapper suggestManageMapper;
 
+    @Autowired
+    DingNotifyFilterMapper dingNotifyFilterMapper;
+
     @Value("${ding.app.meetingbook.url}")
     String meetingBookUrl;
 
@@ -1175,5 +1178,57 @@ public class DingController extends BaseController {
         }).filter(x -> x != null).collect(Collectors.toList());
 
         return RestResponse.getSuccesseResponse(suggestManageVOList);
+    }
+
+    @RequestMapping(value = "/addDingNotifyFilter", method = {RequestMethod.POST})
+    public RestResponse<Void> addDingNotifyFilter(
+            String userIds
+    ) {
+        List<String> newUsersList = new ArrayList<>(Arrays.asList(userIds.split(",", -1)));
+        List<String> existList = dingNotifyFilterMapper.select(new DingNotifyFilter())
+                .stream().map(x -> x.getUserId()).collect(Collectors.toList());
+
+        newUsersList.removeAll(existList);
+
+        newUsersList.forEach(x -> {
+            DingNotifyFilter dingNotifyFilter = new DingNotifyFilter();
+            dingNotifyFilter.setUserId(x);
+            dingNotifyFilterMapper.insert(dingNotifyFilter);
+        });
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/delDingNotifyFilter", method = {RequestMethod.POST})
+    public RestResponse<Void> delDingNotifyFilter(
+            String userIds
+    ) {
+        Arrays.asList(userIds.split(",", -1)).forEach(x -> {
+            DingNotifyFilter dingNotifyFilter = new DingNotifyFilter();
+            dingNotifyFilter.setUserId(x);
+            dingNotifyFilterMapper.delete(dingNotifyFilter);
+        });
+
+        return RestResponse.getSuccesseResponse();
+    }
+
+    @RequestMapping(value = "/getAllDingNotifyFilter", method = {RequestMethod.GET})
+    public RestResponse<List<OapiUserGetWithDeptResponse>> getAllDingNotifyFilter() {
+        return RestResponse.getSuccesseResponse(
+                dingNotifyFilterMapper.select(new DingNotifyFilter()).stream()
+                .map(x -> {
+                    try {
+                        return cacheService.getUserDetail(x.getUserId());
+                    } catch (DingServiceException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    } catch (ApiException e) {
+                        e.printStackTrace();
+                    }
+
+                    return null;
+                }).filter(x -> x != null).collect(Collectors.toList())
+        );
     }
 }

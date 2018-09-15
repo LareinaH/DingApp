@@ -1,6 +1,8 @@
 package com.admin.ac.ding.service;
 
 import com.admin.ac.ding.exception.DingServiceException;
+import com.admin.ac.ding.mapper.DingNotifyFilterMapper;
+import com.admin.ac.ding.model.DingNotifyFilter;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.DingTalkResponse;
@@ -12,8 +14,10 @@ import com.google.common.cache.LoadingCache;
 import com.taobao.api.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -33,6 +37,9 @@ public class DingService {
 
     @Value("${ding.corpsecret}")
     String corpSecret;
+
+    @Autowired
+    DingNotifyFilterMapper dingNotifyFilterMapper;
 
     LoadingCache<String,String> cahceBuilder = CacheBuilder
             .newBuilder()
@@ -158,6 +165,21 @@ public class DingService {
             String content,
             String url
     ) throws ExecutionException, DingServiceException, ApiException, UnsupportedEncodingException {
+        logger.info("plan to send notify for {} users", userIdList.size());
+        List<String> excludeUsers = dingNotifyFilterMapper.select(new DingNotifyFilter())
+                .stream().map(x -> x.getUserId()).collect(Collectors.toList());
+
+        userIdList.removeAll(excludeUsers);
+        logger.info("actual to send notify for {} users", userIdList.size());
+
+        excludeUsers.retainAll(userIdList);
+        logger.info("{} users are in filter list", excludeUsers.size());
+
+        if (CollectionUtils.isEmpty(userIdList)) {
+            logger.info("send notify user list is none and return");
+            return ;
+        }
+
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2");
 
         OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();

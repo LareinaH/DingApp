@@ -44,6 +44,9 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
     @Autowired
     SuggestManageMapper suggestManageMapper;
 
+    @Autowired
+    DingNotifyFilterMapper dingNotifyFilterMapper;
+
     @Override
     public void run(String... strings) throws Exception {
         Example example3 = new Example(MeetingMediaInCharge.class);
@@ -133,6 +136,20 @@ public class QueryUserCommandLineRunner implements CommandLineRunner {
 
                 if (StringUtils.isNotBlank(x.getProcessUserId())) {
                     cacheService.getUserDetail(x.getProcessUserId());
+                }
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (ApiException e) {
+                e.printStackTrace();
+            } catch (DingServiceException e) {
+                e.printStackTrace();
+            }
+        });
+
+        dingNotifyFilterMapper.select(new DingNotifyFilter()).forEach(x -> {
+            try {
+                if (StringUtils.isNotBlank(x.getUserId())) {
+                    cacheService.getUserDetail(x.getUserId());
                 }
             } catch (ExecutionException e) {
                 e.printStackTrace();
