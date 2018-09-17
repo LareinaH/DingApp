@@ -243,4 +243,22 @@ public class DingService {
                 action, target
         );
     }
+
+    public List<OapiUserSimplelistResponse.Userlist> getDeptUserSimpleList(
+            Long deptId,
+            Long pageStart,
+            Long pageSize
+    ) throws DingServiceException, ExecutionException, ApiException {
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/user/simplelist");
+        OapiUserSimplelistRequest request = new OapiUserSimplelistRequest();
+        request.setDepartmentId(deptId);
+        request.setOffset(pageStart);
+        request.setSize(pageSize);
+        request.setHttpMethod("GET");
+
+        OapiUserSimplelistResponse response = client.execute(request, getAccessToken());
+        checkResponse(response, "查询部门用户失败");
+
+        return response.getUserlist();
+    }
 }

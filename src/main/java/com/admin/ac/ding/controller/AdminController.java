@@ -70,6 +70,9 @@ public class AdminController extends BaseController {
     @Autowired
     RepairManGroupMapper repairManGroupMapper;
 
+    @Autowired
+    DeptListLocalMapper deptListLocalMapper;
+
     @Value("${ding.app.meetingbook.agentid}")
     Long meetingBookAppAgentId;
 
@@ -283,6 +286,20 @@ public class AdminController extends BaseController {
             @RequestParam(required = false, defaultValue = "true") Boolean fetchChild
     ) throws ApiException, ExecutionException, DingServiceException {
         return RestResponse.getSuccesseResponse(dingService.getDeptList(deptId, fetchChild));
+    }
+
+    @RequestMapping(value = "/getDeptListLocal", method = {RequestMethod.GET})
+    public RestResponse<List<DeptListLocal>> getDeptListLocal() {
+        return RestResponse.getSuccesseResponse(deptListLocalMapper.select(new DeptListLocal()));
+    }
+
+    @RequestMapping(value = "/getDeptUserSimpleList", method = {RequestMethod.GET})
+    public RestResponse<List<OapiUserSimplelistResponse.Userlist>> getDeptUserSimpleList(
+            @RequestParam(required = false, defaultValue = "1") Long deptId,
+            @RequestParam(required = false, defaultValue = "0") Long pageStart,
+            @RequestParam(required = false, defaultValue = "100") Long pageSize
+    ) throws ApiException, ExecutionException, DingServiceException {
+        return RestResponse.getSuccesseResponse(dingService.getDeptUserSimpleList(deptId, pageStart, pageSize));
     }
 
     @RequestMapping(value = "/getDeptDetail", method = {RequestMethod.GET})

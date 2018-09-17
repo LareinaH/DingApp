@@ -137,7 +137,7 @@
             <!--<ignoreColumn column="gmt_create" />-->
             <!--<ignoreColumn column="gmt_modify" />-->
         <!--</table>-->
-        <table tableName="ding_notify_filter">
+        <table tableName="dept_list_local">
             <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
             <ignoreColumn column="id" />
             <ignoreColumn column="is_deleted" />
