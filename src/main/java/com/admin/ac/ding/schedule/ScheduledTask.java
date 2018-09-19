@@ -56,12 +56,6 @@ public class ScheduledTask {
     @Autowired
     DingController dingController;
 
-    @Value("${ding.app.repair.url")
-    String repairListUrl;
-
-    @Value("${ding.app.meetingbook.url}")
-    String meetingBookUrl;
-
     @Value("${ding.app.meetingbook.agentid}")
     Long meetingBookAppAgentId;
 
