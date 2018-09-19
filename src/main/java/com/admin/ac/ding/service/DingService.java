@@ -39,6 +39,9 @@ public class DingService {
 
     @Value("${ding.corpsecret}")
     String corpSecret;
+    
+    @Value("${ding.app.notify.host}")
+    String notifyHost;
 
     @Autowired
     DingNotifyFilterMapper dingNotifyFilterMapper;
@@ -239,8 +242,8 @@ public class DingService {
 
     public String getNotificationUrl(String action, String target) {
         return String.format(
-                "http://47.97.212.22/DingApp/redirect.html?action=%s&target=%s",
-                action, target
+                "%s/DingApp/redirect.html?action=%s&target=%s",
+                notifyHost, action, target
         );
     }
 
