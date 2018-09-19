@@ -38,7 +38,12 @@ public class CacheService {
         BeanUtils.copyProperties(oapiUserGetResponse, oapiUserGetWithDeptResponse);
 
         for (Long deptId : oapiUserGetResponse.getDepartment()) {
-            oapiUserGetWithDeptResponse.getDeptInfoList().add(getDeptDetail(deptId));
+            try {
+                oapiUserGetWithDeptResponse.getDeptInfoList().add(getDeptDetail(deptId));
+            } catch (Exception e) {
+                System.out.println("query dept " + deptId + " failed");
+                e.printStackTrace();
+            }
         }
 
         return oapiUserGetWithDeptResponse;

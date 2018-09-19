@@ -387,7 +387,14 @@ public class AdminController extends BaseController {
         SysRole sysRole = new SysRole();
         sysRole.setUserId(userId);
         sysRole.setRole(systemRoleType.name());
-        sysRoleMapper.insert(sysRole);
+        // check if exist
+        List<SysRole> existSysRoleList = sysRoleMapper.select(sysRole);
+        if (CollectionUtils.isEmpty(existSysRoleList)) {
+            sysRoleMapper.insert(sysRole);
+        } else {
+            logger.warn("user {} role {} exist", userId, systemRoleType.name());
+        }
+
         return RestResponse.getSuccesseResponse();
     }
 
