@@ -89,14 +89,8 @@ public class DingController extends BaseController {
     @Autowired
     DingNotifyFilterMapper dingNotifyFilterMapper;
 
-    @Value("${ding.app.meetingbook.url}")
-    String meetingBookUrl;
-
     @Value("${ding.app.meetingbook.agentid}")
     Long meetingBookAppAgentId;
-
-    @Value("${ding.app.repair.url")
-    String repairListUrl;
 
     @Value("${ding.app.repair.agentid}")
     Long repairAppAgentId;
