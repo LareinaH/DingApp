@@ -821,6 +821,7 @@ public class DingController extends BaseController {
 
         // 查一下所有维修人员
         RepairManGroup repairManGroup = new RepairManGroup();
+        repairManGroup.setRepairType(repairTypeId);
         List<RepairManGroup> repairManGroupList = repairManGroupMapper.select(repairManGroup);
         Map<Long, RepairManGroup> repairManGroupMap = repairManGroupList.stream().collect(Collectors.toMap(RepairManGroup::getId, Function.identity()));
 
