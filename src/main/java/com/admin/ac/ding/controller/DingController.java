@@ -837,7 +837,7 @@ public class DingController extends BaseController {
                 List<RepairApply> repairListForMan = repairApplyMap.get(repairManId);
                 // 统计历史总数
                 long total = repairListForMan.size();
-                long goodTotal = repairListForMan.stream().filter(x -> x.getScore() >= 5 || x.getScore() == null).count();
+                long goodTotal = repairListForMan.stream().filter(x -> x.getScore() == null || x.getScore() >= 5).count();
                 jsonObject.put("total", total);
                 jsonObject.put("goodTotal", goodTotal);
                 if (total <= 0) {
