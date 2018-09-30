@@ -850,7 +850,7 @@ public class DingController extends BaseController {
                 Date date = new Date();
                 long totalMonth = repairListForMan.stream().filter(x -> MyDateUtils.isSameMonth(x.getGmtCreate(), date)).count();
                 long goodTotalMonth = repairListForMan.stream().filter(x -> MyDateUtils.isSameMonth(x.getGmtCreate(), date))
-                        .filter(x -> x.getScore() >= 5 || x.getScore() == null).count();
+                        .filter(x -> x.getScore() == null || x.getScore() >= 5).count();
                 jsonObject.put("totalMonth", totalMonth);
                 jsonObject.put("goodTotalMonth", goodTotalMonth);
                 if (totalMonth <= 0) {
