@@ -866,8 +866,8 @@ public class DingController extends BaseController {
                 jsonObject.put("totalMonth", 0L);
                 jsonObject.put("goodTotalMonth", 0L);
                 jsonObject.put("goodTotalMonthRate", "0.0%");
-                result.add(jsonObject);
             }
+            result.add(jsonObject);
         }
 
         return RestResponse.getSuccesseResponse(result);
