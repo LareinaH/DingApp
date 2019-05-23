@@ -781,17 +781,17 @@ public class DingController extends BaseController {
                     BeanUtils.copyProperties(x, repairApplyDetailVO);
 
                     try {
-                        repairApplyDetailVO.setSubmitUserDetail(cacheService.getUserDetail(x.getSubmitUserId()));
-                        if (x.getRepairProcUserId() != null && repairManGroupMap.containsKey(x.getRepairProcUserId())) {
-                            repairApplyDetailVO.setRepairManGroup(repairManGroupMap.get(x.getRepairProcUserId()));
-                        }
-
                         if (repairTypeMap.containsKey(x.getRepairType())) {
                             repairApplyDetailVO.setRepairTypeDetail(repairTypeMap.get(x.getRepairType()));
                         }
 
                         if (repairSubTypeMap.containsKey(x.getRepairSubType())) {
                             repairApplyDetailVO.setRepairSubTypeDetail(repairSubTypeMap.get(x.getRepairSubType()));
+                        }
+
+                        repairApplyDetailVO.setSubmitUserDetail(cacheService.getUserDetail(x.getSubmitUserId()));
+                        if (x.getRepairProcUserId() != null && repairManGroupMap.containsKey(x.getRepairProcUserId())) {
+                            repairApplyDetailVO.setRepairManGroup(repairManGroupMap.get(x.getRepairProcUserId()));
                         }
                     } catch (ExecutionException e) {
                         e.printStackTrace();
